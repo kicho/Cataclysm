@@ -246,10 +246,10 @@ MapManager::Update(const uint32 time_, const uint32 diff)
         return;
 
     for(MapMapType::iterator iter=i_maps.begin(); iter != i_maps.end(); ++iter)
-        iter->second->Update(time_, (uint32)i_timer.GetCurrent());
+        iter->second->Update(time_, i_timer.GetCurrent());
 
     for (TransportSet::iterator iter = m_Transports.begin(); iter != m_Transports.end(); ++iter)
-        (*iter)->UpdateCall(time_, (uint32)i_timer.GetCurrent());
+        (*iter)->Update(i_timer.GetCurrent(), i_timer.GetCurrent());
 
     i_timer.SetCurrent(0);
 }

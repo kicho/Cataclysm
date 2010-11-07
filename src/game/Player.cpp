@@ -7857,7 +7857,7 @@ void Player::RemovedInsignia(Player* looterPlr)
     // We retrieve this information at Player::SendLoot()
     bones->loot.gold = getLevel();
     bones->lootRecipient = looterPlr;
-    looterPlr->SendLoot(bones->GetGUID(), LOOT_INSIGNIA);
+    looterPlr->SendLoot(bones->GetObjectGuid(), LOOT_INSIGNIA);
 }
 
 void Player::SendLootRelease(ObjectGuid guid)
@@ -8137,11 +8137,9 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
     loot->loot_type = loot_type;
 
     WorldPacket data(SMSG_LOOT_RESPONSE, (9+50));           // we guess size
-
-    data << guid;
+    data << ObjectGuid(guid);
     data << uint8(loot_type);
     data << LootView(*loot, this, permission);
-
     SendDirectMessage(&data);
 
     // add 'this' player as one of the players that are looting 'loot'
@@ -9696,6 +9694,14 @@ uint8 Player::_CanStoreItem( uint8 bag, uint8 slot, ItemPosCountVec &dest, uint3
 
     if (pItem)
     {
+        // item used
+        if (pItem->HasTemporaryLoot())
+        {
+            if (no_space_count)
+                *no_space_count = count;
+            return EQUIP_ERR_ALREADY_LOOTED;
+        }
+
         if (pItem->IsBindedNotWith(this))
         {
             if (no_space_count)
@@ -10180,11 +10186,15 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
         ItemPrototype const *pProto = pItem->GetProto();
 
         // strange item
-        if( !pProto )
+        if (!pProto)
             return EQUIP_ERR_ITEM_NOT_FOUND;
 
+        // item used
+        if (pItem->HasTemporaryLoot())
+            return EQUIP_ERR_ALREADY_LOOTED;
+
         // item it 'bind'
-        if(pItem->IsBindedNotWith(this))
+        if (pItem->IsBindedNotWith(this))
             return EQUIP_ERR_DONT_OWN_THAT_ITEM;
 
         Bag *pBag;
@@ -10192,18 +10202,18 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
 
         // item is 'one item only'
         uint8 res = CanTakeMoreSimilarItems(pItem);
-        if(res != EQUIP_ERR_OK)
+        if (res != EQUIP_ERR_OK)
             return res;
 
         // search stack for merge to
-        if( pProto->Stackable != 1 )
+        if (pProto->Stackable != 1)
         {
             bool b_found = false;
 
             for(int t = KEYRING_SLOT_START; t < KEYRING_SLOT_END; ++t)
             {
                 pItem2 = GetItemByPos( INVENTORY_SLOT_BAG_0, t );
-                if( pItem2 && pItem2->CanBeMergedPartlyWith(pProto) == EQUIP_ERR_OK && inv_keys[t-KEYRING_SLOT_START] + pItem->GetCount() <= pProto->GetMaxStackSize())
+                if (pItem2 && pItem2->CanBeMergedPartlyWith(pProto) == EQUIP_ERR_OK && inv_keys[t-KEYRING_SLOT_START] + pItem->GetCount() <= pProto->GetMaxStackSize())
                 {
                     inv_keys[t-KEYRING_SLOT_START] += pItem->GetCount();
                     b_found = true;
@@ -10215,7 +10225,7 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
             for(int t = CURRENCYTOKEN_SLOT_START; t < CURRENCYTOKEN_SLOT_END; ++t)
             {
                 pItem2 = GetItemByPos( INVENTORY_SLOT_BAG_0, t );
-                if( pItem2 && pItem2->CanBeMergedPartlyWith(pProto) == EQUIP_ERR_OK && inv_tokens[t-CURRENCYTOKEN_SLOT_START] + pItem->GetCount() <= pProto->GetMaxStackSize())
+                if (pItem2 && pItem2->CanBeMergedPartlyWith(pProto) == EQUIP_ERR_OK && inv_tokens[t-CURRENCYTOKEN_SLOT_START] + pItem->GetCount() <= pProto->GetMaxStackSize())
                 {
                     inv_tokens[t-CURRENCYTOKEN_SLOT_START] += pItem->GetCount();
                     b_found = true;
@@ -10227,7 +10237,7 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
             for(int t = INVENTORY_SLOT_ITEM_START; t < INVENTORY_SLOT_ITEM_END; ++t)
             {
                 pItem2 = GetItemByPos( INVENTORY_SLOT_BAG_0, t );
-                if( pItem2 && pItem2->CanBeMergedPartlyWith(pProto) == EQUIP_ERR_OK && inv_slot_items[t-INVENTORY_SLOT_ITEM_START] + pItem->GetCount() <= pProto->GetMaxStackSize())
+                if (pItem2 && pItem2->CanBeMergedPartlyWith(pProto) == EQUIP_ERR_OK && inv_slot_items[t-INVENTORY_SLOT_ITEM_START] + pItem->GetCount() <= pProto->GetMaxStackSize())
                 {
                     inv_slot_items[t-INVENTORY_SLOT_ITEM_START] += pItem->GetCount();
                     b_found = true;
@@ -10239,12 +10249,12 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
             for(int t = INVENTORY_SLOT_BAG_START; !b_found && t < INVENTORY_SLOT_BAG_END; ++t)
             {
                 pBag = (Bag*)GetItemByPos( INVENTORY_SLOT_BAG_0, t );
-                if( pBag )
+                if (pBag)
                 {
                     for(uint32 j = 0; j < pBag->GetBagSize(); ++j)
                     {
                         pItem2 = GetItemByPos( t, j );
-                        if( pItem2 && pItem2->CanBeMergedPartlyWith(pProto) == EQUIP_ERR_OK && inv_bags[t-INVENTORY_SLOT_BAG_START][j] + pItem->GetCount() <= pProto->GetMaxStackSize())
+                        if (pItem2 && pItem2->CanBeMergedPartlyWith(pProto) == EQUIP_ERR_OK && inv_bags[t-INVENTORY_SLOT_BAG_START][j] + pItem->GetCount() <= pProto->GetMaxStackSize())
                         {
                             inv_bags[t-INVENTORY_SLOT_BAG_START][j] += pItem->GetCount();
                             b_found = true;
@@ -10257,15 +10267,15 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
         }
 
         // special bag case
-        if( pProto->BagFamily )
+        if (pProto->BagFamily)
         {
             bool b_found = false;
-            if(pProto->BagFamily & BAG_FAMILY_MASK_KEYS)
+            if (pProto->BagFamily & BAG_FAMILY_MASK_KEYS)
             {
                 uint32 keyringSize = GetMaxKeyringSize();
                 for(uint32 t = KEYRING_SLOT_START; t < KEYRING_SLOT_START+keyringSize; ++t)
                 {
-                    if( inv_keys[t-KEYRING_SLOT_START] == 0 )
+                    if (inv_keys[t-KEYRING_SLOT_START] == 0)
                     {
                         inv_keys[t-KEYRING_SLOT_START] = 1;
                         b_found = true;
@@ -10276,11 +10286,11 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
 
             if (b_found) continue;
 
-            if(pProto->BagFamily & BAG_FAMILY_MASK_CURRENCY_TOKENS)
+            if (pProto->BagFamily & BAG_FAMILY_MASK_CURRENCY_TOKENS)
             {
                 for(uint32 t = CURRENCYTOKEN_SLOT_START; t < CURRENCYTOKEN_SLOT_END; ++t)
                 {
-                    if( inv_tokens[t-CURRENCYTOKEN_SLOT_START] == 0 )
+                    if (inv_tokens[t-CURRENCYTOKEN_SLOT_START] == 0)
                     {
                         inv_tokens[t-CURRENCYTOKEN_SLOT_START] = 1;
                         b_found = true;
@@ -10294,17 +10304,17 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
             for(int t = INVENTORY_SLOT_BAG_START; !b_found && t < INVENTORY_SLOT_BAG_END; ++t)
             {
                 pBag = (Bag*)GetItemByPos( INVENTORY_SLOT_BAG_0, t );
-                if( pBag )
+                if (pBag)
                 {
                     pBagProto = pBag->GetProto();
 
                     // not plain container check
-                    if( pBagProto && (pBagProto->Class != ITEM_CLASS_CONTAINER || pBagProto->SubClass != ITEM_SUBCLASS_CONTAINER) &&
+                    if (pBagProto && (pBagProto->Class != ITEM_CLASS_CONTAINER || pBagProto->SubClass != ITEM_SUBCLASS_CONTAINER) &&
                         ItemCanGoIntoBag(pProto,pBagProto) )
                     {
                         for(uint32 j = 0; j < pBag->GetBagSize(); ++j)
                         {
-                            if( inv_bags[t-INVENTORY_SLOT_BAG_START][j] == 0 )
+                            if (inv_bags[t-INVENTORY_SLOT_BAG_START][j] == 0)
                             {
                                 inv_bags[t-INVENTORY_SLOT_BAG_START][j] = 1;
                                 b_found = true;
@@ -10321,7 +10331,7 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
         bool b_found = false;
         for(int t = INVENTORY_SLOT_ITEM_START; t < INVENTORY_SLOT_ITEM_END; ++t)
         {
-            if( inv_slot_items[t-INVENTORY_SLOT_ITEM_START] == 0 )
+            if (inv_slot_items[t-INVENTORY_SLOT_ITEM_START] == 0)
             {
                 inv_slot_items[t-INVENTORY_SLOT_ITEM_START] = 1;
                 b_found = true;
@@ -10334,17 +10344,17 @@ uint8 Player::CanStoreItems( Item **pItems,int count) const
         for(int t = INVENTORY_SLOT_BAG_START; !b_found && t < INVENTORY_SLOT_BAG_END; ++t)
         {
             pBag = (Bag*)GetItemByPos( INVENTORY_SLOT_BAG_0, t );
-            if( pBag )
+            if (pBag)
             {
                 pBagProto = pBag->GetProto();
 
                 // special bag already checked
-                if( pBagProto && (pBagProto->Class != ITEM_CLASS_CONTAINER || pBagProto->SubClass != ITEM_SUBCLASS_CONTAINER))
+                if (pBagProto && (pBagProto->Class != ITEM_CLASS_CONTAINER || pBagProto->SubClass != ITEM_SUBCLASS_CONTAINER))
                     continue;
 
                 for(uint32 j = 0; j < pBag->GetBagSize(); ++j)
                 {
-                    if( inv_bags[t-INVENTORY_SLOT_BAG_START][j] == 0 )
+                    if (inv_bags[t-INVENTORY_SLOT_BAG_START][j] == 0)
                     {
                         inv_bags[t-INVENTORY_SLOT_BAG_START][j] = 1;
                         b_found = true;
@@ -10367,7 +10377,7 @@ uint8 Player::CanEquipNewItem( uint8 slot, uint16 &dest, uint32 item, bool swap 
 {
     dest = 0;
     Item *pItem = Item::CreateItem( item, 1, this );
-    if( pItem )
+    if (pItem)
     {
         uint8 result = CanEquipItem(slot, dest, pItem, swap );
         delete pItem;
@@ -10380,22 +10390,26 @@ uint8 Player::CanEquipNewItem( uint8 slot, uint16 &dest, uint32 item, bool swap 
 uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bool not_loading ) const
 {
     dest = 0;
-    if( pItem )
+    if (pItem)
     {
         DEBUG_LOG( "STORAGE: CanEquipItem slot = %u, item = %u, count = %u", slot, pItem->GetEntry(), pItem->GetCount());
         ItemPrototype const *pProto = pItem->GetProto();
-        if( pProto )
+        if (pProto)
         {
-            if(pItem->IsBindedNotWith(this))
+            // item used
+            if (pItem->HasTemporaryLoot())
+                return EQUIP_ERR_ALREADY_LOOTED;
+
+            if (pItem->IsBindedNotWith(this))
                 return EQUIP_ERR_DONT_OWN_THAT_ITEM;
 
             // check count of items (skip for auto move for same player from bank)
             uint8 res = CanTakeMoreSimilarItems(pItem);
-            if(res != EQUIP_ERR_OK)
+            if (res != EQUIP_ERR_OK)
                 return res;
 
             // check this only in game
-            if(not_loading)
+            if (not_loading)
             {
                 // May be here should be more stronger checks; STUNNED checked
                 // ROOT, CONFUSED, DISTRACTED, FLEEING this needs to be checked.
@@ -10405,20 +10419,20 @@ uint8 Player::CanEquipItem( uint8 slot, uint16 &dest, Item *pItem, bool swap, bo
                 // do not allow equipping gear except weapons, offhands, projectiles, relics in
                 // - combat
                 // - in-progress arenas
-                if( !pProto->CanChangeEquipStateInCombat() )
+                if (!pProto->CanChangeEquipStateInCombat())
                 {
                     if( isInCombat() )
                         return EQUIP_ERR_NOT_IN_COMBAT;
 
-                    if(BattleGround* bg = GetBattleGround())
-                        if( bg->isArena() && bg->GetStatus() == STATUS_IN_PROGRESS )
+                    if (BattleGround* bg = GetBattleGround())
+                        if (bg->isArena() && bg->GetStatus() == STATUS_IN_PROGRESS)
                             return EQUIP_ERR_NOT_DURING_ARENA_MATCH;
                 }
 
-                if(isInCombat()&& pProto->Class == ITEM_CLASS_WEAPON && m_weaponChangeTimer != 0)
+                if (isInCombat()&& pProto->Class == ITEM_CLASS_WEAPON && m_weaponChangeTimer != 0)
                     return EQUIP_ERR_CANT_DO_RIGHT_NOW;         // maybe exist better err
 
-                if(IsNonMeleeSpellCasted(false))
+                if (IsNonMeleeSpellCasted(false))
                     return EQUIP_ERR_CANT_DO_RIGHT_NOW;
             }
 
@@ -10529,6 +10543,10 @@ uint8 Player::CanUnequipItem( uint16 pos, bool swap ) const
     if (!pProto)
         return EQUIP_ERR_ITEM_NOT_FOUND;
 
+    // item used
+    if (pItem->HasTemporaryLoot())
+        return EQUIP_ERR_ALREADY_LOOTED;
+
     // do not allow unequipping gear except weapons, offhands, projectiles, relics in
     // - combat
     // - in-progress arenas
@@ -10559,6 +10577,10 @@ uint8 Player::CanBankItem( uint8 bag, uint8 slot, ItemPosCountVec &dest, Item *p
     ItemPrototype const *pProto = pItem->GetProto();
     if (!pProto)
         return swap ? EQUIP_ERR_ITEMS_CANT_BE_SWAPPED : EQUIP_ERR_ITEM_NOT_FOUND;
+
+    // item used
+    if (pItem->HasTemporaryLoot())
+        return EQUIP_ERR_ALREADY_LOOTED;
 
     if (pItem->IsBindedNotWith(this))
         return EQUIP_ERR_DONT_OWN_THAT_ITEM;
@@ -10786,9 +10808,7 @@ uint8 Player::CanUseItem( Item *pItem, bool not_loading ) const
                 }
             }
 
-            // reputation for BOA items checked only at buy/quest rewarding (quest accepting in fact by quest rep requirements)
-            if (!(pProto->Flags & ITEM_FLAG_BOA) && pProto->RequiredReputationFaction &&
-                uint32(GetReputationRank(pProto->RequiredReputationFaction)) < pProto->RequiredReputationRank)
+            if (pProto->RequiredReputationFaction && uint32(GetReputationRank(pProto->RequiredReputationFaction)) < pProto->RequiredReputationRank)
                 return EQUIP_ERR_CANT_EQUIP_REPUTATION;
 
             return EQUIP_ERR_OK;
@@ -12803,7 +12823,8 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
                 case GOSSIP_OPTION_VENDOR:
                 {
                     VendorItemData const* vItems = pCreature->GetVendorItems();
-                    if (!vItems || vItems->Empty())
+                    VendorItemData const* tItems = pCreature->GetVendorTemplateItems();
+                    if ((!vItems || vItems->Empty()) && (!tItems || tItems->Empty()))
                     {
                         sLog.outErrorDb("Creature %u (Entry: %u) have UNIT_NPC_FLAG_VENDOR but have empty trading item list.", pCreature->GetGUIDLow(), pCreature->GetEntry());
                         hasMenuItem = false;
@@ -18769,25 +18790,48 @@ bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 
     }
 
     VendorItemData const* vItems = pCreature->GetVendorItems();
-    if(!vItems || vItems->Empty())
+    VendorItemData const* tItems = pCreature->GetVendorTemplateItems();
+    if ((!vItems || vItems->Empty()) && (!tItems || tItems->Empty()))
     {
         SendBuyError( BUY_ERR_CANT_FIND_ITEM, pCreature, item, 0);
         return false;
     }
 
-    if (vendorslot >= vItems->GetItemCount())
+    uint32 vCount = vItems ? vItems->GetItemCount() : 0;
+    uint32 tCount = tItems ? tItems->GetItemCount() : 0;
+
+    if (vendorslot >= vCount+tCount)
     {
         SendBuyError( BUY_ERR_CANT_FIND_ITEM, pCreature, item, 0);
         return false;
     }
 
-    VendorItem const* crItem = vItems->GetItem(vendorslot);
-    if(!crItem || crItem->item != item)                     // store diff item (cheating)
+    VendorItem const* crItem = vendorslot < vCount ? vItems->GetItem(vendorslot) : tItems->GetItem(vendorslot - vCount);
+    if (!crItem)                                            // store diff item (cheating)
     {
         SendBuyError( BUY_ERR_CANT_FIND_ITEM, pCreature, item, 0);
         return false;
     }
 
+    if (crItem->item != item)                               // store diff item (cheating or special convert)
+    {
+        ItemPrototype const* crProto = ObjectMgr::GetItemPrototype(crItem->item);
+        // possible item coverting for BoA case
+        if (crProto->Flags & ITEM_FLAG_BOA)
+        {
+            // convert if can use and then buy
+            if (crProto->RequiredReputationFaction && uint32(GetReputationRank(crProto->RequiredReputationFaction)) >= crProto->RequiredReputationRank)
+            {
+                uint32 newitemid = sObjectMgr.GetItemConvert(crItem->item, getRaceMask());
+
+                if (newitemid != item)                      // store diff item (cheating or special convert)
+                {
+                    SendBuyError( BUY_ERR_CANT_FIND_ITEM, pCreature, item, 0);
+                    return false;
+                }
+            }
+        }
+    }
 
     // check current item amount if it limited
     if (crItem->maxcount != 0)

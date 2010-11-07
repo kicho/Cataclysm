@@ -998,6 +998,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Items..." );                   // must be after LoadRandomEnchantmentsTable and LoadPageTexts
     sObjectMgr.LoadItemPrototypes();
 
+    sLog.outString( "Loading Item converts..." );           // must be after LoadItemPrototypes
+    sObjectMgr.LoadItemConverts();
+
     sLog.outString( "Loading Creature Model Based Info Data..." );
     sObjectMgr.LoadCreatureModelInfo();
 
@@ -1191,10 +1194,10 @@ void World::SetInitialWorldSettings()
     sObjectMgr.LoadGameTele();
 
     sLog.outString( "Loading Npc Text Id..." );
-    sObjectMgr.LoadNpcTextId();                                 // must be after load Creature and NpcText
+    sObjectMgr.LoadNpcTextId();                             // must be after load Creature and NpcText
 
     sLog.outString( "Loading Gossip scripts..." );
-    sObjectMgr.LoadGossipScripts();                             // must be before gossip menu options
+    sObjectMgr.LoadGossipScripts();                         // must be before gossip menu options
 
     sLog.outString( "Loading Gossip menus..." );
     sObjectMgr.LoadGossipMenu();
@@ -1203,12 +1206,13 @@ void World::SetInitialWorldSettings()
     sObjectMgr.LoadGossipMenuItems();
 
     sLog.outString( "Loading Vendors..." );
-    sObjectMgr.LoadVendors();                                   // must be after load CreatureTemplate and ItemTemplate
+    sObjectMgr.LoadVendorTemplates();                       // must be after load ItemTemplate
+    sObjectMgr.LoadVendors();                               // must be after load CreatureTemplate, VendorTemplate, and ItemTemplate
 
     sLog.outString( "Loading Trainers..." );
-    sObjectMgr.LoadTrainerSpell();                              // must be after load CreatureTemplate
+    sObjectMgr.LoadTrainerSpell();                          // must be after load CreatureTemplate
 
-    sLog.outString( "Loading Waypoint scripts..." );            // before loading from creature_movement
+    sLog.outString( "Loading Waypoint scripts..." );        // before loading from creature_movement
     sObjectMgr.LoadCreatureMovementScripts();
 
     sLog.outString( "Loading Waypoints..." );
@@ -1287,7 +1291,7 @@ void World::SetInitialWorldSettings()
     //one second is 1000 -(tested on win system)
     mail_timer = uint32((((localtime( &m_gameTime )->tm_hour + 20) % 24)* HOUR * IN_MILLISECONDS) / m_timers[WUPDATE_AUCTIONS].GetInterval() );
                                                             //1440
-    mail_timer_expires = uint32( (DAY * IN_MILLISECONDS) / (m_timers[WUPDATE_AUCTIONS].GetInterval()));
+    mail_timer_expires = (DAY * IN_MILLISECONDS) / m_timers[WUPDATE_AUCTIONS].GetInterval();
     DEBUG_LOG("Mail timer set to: %u, mail return is called every %u minutes", mail_timer, mail_timer_expires);
 
     ///- Initialize static helper structures
@@ -1385,12 +1389,7 @@ void World::Update(uint32 time_, uint32 diff)
 {
     ///- Update the different timers
     for(int i = 0; i < WUPDATE_COUNT; ++i)
-    {
-        if (m_timers[i].GetCurrent()>=0)
-            m_timers[i].Update(diff);
-        else
-            m_timers[i].SetCurrent(0);
-    }
+        m_timers[i].Update(diff);
 
     ///- Update the game time and check for shutdown time
     _UpdateGameTime();
@@ -1435,23 +1434,21 @@ void World::Update(uint32 time_, uint32 diff)
     /// <li> Handle weather updates when the timer has passed
     if (m_timers[WUPDATE_WEATHERS].Passed())
     {
-        m_timers[WUPDATE_WEATHERS].Reset();
-
         ///- Send an update signal to Weather objects
-        WeatherMap::iterator itr, next;
-        for (itr = m_weathers.begin(); itr != m_weathers.end(); itr = next)
+        for (WeatherMap::iterator itr = m_weathers.begin(); itr != m_weathers.end(); )
         {
-            next = itr;
-            ++next;
-
             ///- and remove Weather objects for zones with no player
                                                             //As interval > WorldTick
             if(!itr->second->Update(m_timers[WUPDATE_WEATHERS].GetInterval()))
             {
                 delete itr->second;
-                m_weathers.erase(itr);
+                m_weathers.erase(itr++);
             }
+            else
+                ++itr;
         }
+
+        m_timers[WUPDATE_WEATHERS].SetCurrent(0);
     }
     /// <li> Update uptime table
     if (m_timers[WUPDATE_UPTIME].Passed())

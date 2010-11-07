@@ -90,6 +90,7 @@ class Vehicle : public Creature
         void Respawn();
 
         void SetDeathState(DeathState s);                   // overwrite virtual Creature::SetDeathState and Unit::SetDeathState
+        void Update(uint32 update_diff, uint32 tick_diff);  // overwrite WorldObject::Update 
 
         void RegeneratePower(Powers power);
 
@@ -130,8 +131,6 @@ class Vehicle : public Creature
         uint8 GetPassengerSeat(Unit *passenger) const;
 
     protected:
-        void Update(uint32 update_diff, uint32 tick_diff);  // overwrite virtual Creature::Update and Unit::Update
-
         uint32 m_vehicleId;
         VehicleEntry const *m_vehicleInfo;
         VehicleDataStructure const *m_VehicleData;

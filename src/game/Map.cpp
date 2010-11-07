@@ -131,7 +131,8 @@ Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode, Map* _par
   i_id(id), i_InstanceId(InstanceId), m_unloadTimer(0),
   m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE), m_instanceSave(NULL),
   m_activeNonPlayersIter(m_activeNonPlayers.end()),
-  i_gridExpiry(expiry), m_parentMap(_parent ? _parent : this)
+  i_gridExpiry(expiry), m_parentMap(_parent ? _parent : this),
+  m_lastUpdateTime(getMSTime())                             // expected that next update call will not long after map creating
 {
     for(unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
     {
@@ -430,7 +431,6 @@ void Map::MessageBroadcast(Player *player, WorldPacket *msg, bool to_self)
     }
 
     Cell cell(p);
-    cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
 
     if( !loaded(GridPair(cell.data.Part.grid_x, cell.data.Part.grid_y)) )
@@ -452,7 +452,6 @@ void Map::MessageBroadcast(WorldObject *obj, WorldPacket *msg)
     }
 
     Cell cell(p);
-    cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
 
     if( !loaded(GridPair(cell.data.Part.grid_x, cell.data.Part.grid_y)) )
@@ -476,7 +475,6 @@ void Map::MessageDistBroadcast(Player *player, WorldPacket *msg, float dist, boo
     }
 
     Cell cell(p);
-    cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
 
     if( !loaded(GridPair(cell.data.Part.grid_x, cell.data.Part.grid_y)) )
@@ -498,7 +496,6 @@ void Map::MessageDistBroadcast(WorldObject *obj, WorldPacket *msg, float dist)
     }
 
     Cell cell(p);
-    cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
 
     if( !loaded(GridPair(cell.data.Part.grid_x, cell.data.Part.grid_y)) )
@@ -516,20 +513,16 @@ bool Map::loaded(const GridPair &p) const
 
 void Map::Update(uint32 time_, uint32 diff)
 {
+    m_lastUpdateTime = time_;
+
     /// update players at tick
     for(m_mapRefIter = m_mapRefManager.begin(); m_mapRefIter != m_mapRefManager.end(); ++m_mapRefIter)
         if (Player* plr = m_mapRefIter->getSource())
             if (plr->IsInWorld())
-                plr->UpdateCall(time_, diff);
+                plr->Update(diff, diff);
 
     /// update active cells around players and active objects
     resetMarkedCells();
-
-    MaNGOS::ObjectUpdater updater(time_, diff);
-    // for creature
-    TypeContainerVisitor<MaNGOS::ObjectUpdater, GridTypeMapContainer  > grid_object_update(updater);
-    // for pets
-    TypeContainerVisitor<MaNGOS::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
 
     // the player iterator is stored in the map object
     // to make sure calls to Map::Remove don't invalidate it
@@ -550,7 +543,7 @@ void Map::Update(uint32 time_, uint32 diff)
         // so ther's no need for range checking inside the loop
         CellPair begin_cell(standing_cell), end_cell(standing_cell);
         //lets update mobs/objects in ALL visible cells around player!
-        CellArea area = Cell::CalculateCellArea(*plr, GetVisibilityDistance());
+        CellArea area = Cell::CalculateCellArea(plr->GetPositionX(), plr->GetPositionY(), GetVisibilityDistance());
         area.ResizeBorders(begin_cell, end_cell);
 
         for(uint32 x = begin_cell.x_coord; x <= end_cell.x_coord; ++x)
@@ -563,12 +556,27 @@ void Map::Update(uint32 time_, uint32 diff)
                 if(!isCellMarked(cell_id))
                 {
                     markCell(cell_id);
+
                     CellPair pair(x,y);
                     Cell cell(pair);
-                    cell.data.Part.reserved = CENTER_DISTRICT;
                     cell.SetNoCreate();
-                    cell.Visit(pair, grid_object_update,  *this);
-                    cell.Visit(pair, world_object_update, *this);
+
+                    uint32 realdiff = diff;
+                    if (loaded(cell.gridPair()) )
+                    {
+                        GridType& celldata = (*getNGrid(cell.GridX(), cell.GridY()))(cell.CellX(), cell.CellY());
+                        uint32 realdiff = getMSTimeDiff(celldata.GetLastUpdateTime(), time_);
+                        celldata.SetLastUpdateTime(time_);
+                    }
+
+                    MaNGOS::ObjectUpdater updater(realdiff, diff);
+                    // for creature
+                    TypeContainerVisitor<MaNGOS::ObjectUpdater, GridTypeMapContainer  > grid_object_update(updater);
+                    // for pets
+                    TypeContainerVisitor<MaNGOS::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
+
+                    Visit(cell, grid_object_update);
+                    Visit(cell, world_object_update);
                 }
             }
         }
@@ -611,12 +619,27 @@ void Map::Update(uint32 time_, uint32 diff)
                     if(!isCellMarked(cell_id))
                     {
                         markCell(cell_id);
+
                         CellPair pair(x,y);
                         Cell cell(pair);
-                        cell.data.Part.reserved = CENTER_DISTRICT;
                         cell.SetNoCreate();
-                        cell.Visit(pair, grid_object_update,  *this);
-                        cell.Visit(pair, world_object_update, *this);
+
+                        uint32 realdiff = diff;
+                        if (loaded(cell.gridPair()) )
+                        {
+                            GridType& celldata = (*getNGrid(cell.GridX(), cell.GridY()))(cell.CellX(), cell.CellY());
+                            uint32 realdiff = getMSTimeDiff(celldata.GetLastUpdateTime(), time_);
+                            celldata.SetLastUpdateTime(time_);
+                        }
+
+                        MaNGOS::ObjectUpdater updater(realdiff, diff);
+                        // for creature
+                        TypeContainerVisitor<MaNGOS::ObjectUpdater, GridTypeMapContainer  > grid_object_update(updater);
+                        // for pets
+                        TypeContainerVisitor<MaNGOS::ObjectUpdater, WorldTypeMapContainer > world_object_update(updater);
+
+                        Visit(cell, grid_object_update);
+                        Visit(cell, world_object_update);
                     }
                 }
             }
@@ -744,7 +767,6 @@ Map::PlayerRelocation(Player *player, float x, float y, float z, float orientati
 
     Cell old_cell(old_val);
     Cell new_cell(new_val);
-    new_cell |= old_cell;
     bool same_cell = (new_cell == old_cell);
 
     player->Relocate(x, y, z, orientation);
@@ -1362,7 +1384,6 @@ const char* Map::GetMapName() const
 
 void Map::UpdateObjectVisibility( WorldObject* obj, Cell cell, CellPair cellpair)
 {
-    cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
     MaNGOS::VisibleChangesNotifier notifier(*obj);
     TypeContainerVisitor<MaNGOS::VisibleChangesNotifier, WorldTypeMapContainer > player_notifier(notifier);
@@ -1372,7 +1393,6 @@ void Map::UpdateObjectVisibility( WorldObject* obj, Cell cell, CellPair cellpair
 void Map::PlayerRelocationNotify( Player* player, Cell cell, CellPair cellpair )
 {
     MaNGOS::PlayerRelocationNotifier relocationNotifier(*player);
-    cell.data.Part.reserved = ALL_DISTRICT;
 
     TypeContainerVisitor<MaNGOS::PlayerRelocationNotifier, GridTypeMapContainer >  p2grid_relocation(relocationNotifier);
     TypeContainerVisitor<MaNGOS::PlayerRelocationNotifier, WorldTypeMapContainer > p2world_relocation(relocationNotifier);
