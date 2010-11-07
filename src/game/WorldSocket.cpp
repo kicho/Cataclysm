@@ -244,7 +244,24 @@ int WorldSocket::open (void *a)
     m_Address = remote_addr.get_host_addr ();
 
     // Send startup packet.
-    WorldPacket packet (SMSG_AUTH_CHALLENGE, 37);
+    //WorldPacket packet (SMSG_AUTH_CHALLENGE, 37);
+	WorldPacket packet (SMSG_AUTH_CHALLENGE, 24);
+
+		BigNumber key1, key2;
+        key1.SetRand(64);
+        key2.SetRand(64);
+        uint32* k1 = (uint32*)key1.AsByteArray();
+        uint32* k2 = (uint32*)key2.AsByteArray();
+        uint8 ConnectionCount = 1;
+
+        packet << k2[2] << k1[0];
+        packet << ConnectionCount;
+        packet << m_Seed;
+        packet << k1[2] << k1[1];
+        packet << k2[0] << k2[1];
+        packet << k1[3] << k2[3];
+
+        //SendPacket( &packet );
 
     BigNumber seed1;
     seed1.SetRand(16 * 8);
@@ -253,9 +270,6 @@ int WorldSocket::open (void *a)
     BigNumber seed2;
     seed2.SetRand(16 * 8);
     packet.append(seed2.AsByteArray(16), 16);               // new encryption seeds
-
-    packet << uint8(1);                                     // 1...31
-    packet << uint32(m_Seed);
 
     if (SendPacket (packet) == -1)
         return -1;
@@ -742,7 +756,7 @@ int WorldSocket::ProcessIncoming (WorldPacket* new_pct)
 int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
 {
     // NOTE: ATM the socket is singlethread, have this in mind ...
-    uint8 digest[20];
+    /*uint8 digest[20];
     uint32 clientSeed, id, security;
     uint16 ClientBuild;
     uint8 expansion = 0;
@@ -750,25 +764,65 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     std::string account;
     Sha1Hash sha1;
     BigNumber v, s, g, N, K;
-    WorldPacket packet;
+    WorldPacket packet;*/
+
+         uint8 digest[20];
+         uint8 h[20];
+         uint8 unkb;
+         uint32 unkd;
+         uint64 unkq;
+         uint32 unk2;
+         uint32 unk4;
+         uint8 unk5;
+         uint16 ClientBuild;
+         uint32 unk6;
+         uint32 ClientSeed;
+         uint32 unk7;
+         std::string account;
+                 uint32 id, security;
+                 LocaleConstant locale;
+                 SHA1Hash sha1;
+                 BigNumber v, s, g, N, K;
+                 WorldPacket packet, SendAddonPacked;
+				 uint32 m_addonSize;
+				 uint32 m_addonLenCompressed;
+				 uint8* m_addonCompressed;
+                 
+                 
+
+        recvPacket >> h[4] >> h[8] >> h[14] >> h[17] >> unkb >> h[3] >> unkd >> h[5];
+        recvPacket >> unkb >> h[0] >> h[10] >> unkd >> h[12] >> h[6] >> unkd >> ClientBuild;
+        recvPacket >> h[7] >> h[11] >> h[16] >> h[18] >> h[13] >> unkq >> h[15];
+        recvPacket >> ClientSeed >> h[9] >> unkd >> h[1] >> h[2] >> h[19];
+        memcpy(digest, h, 20);
+        uint32 ByteSize = 0, SizeUncompressed;
+        recvPacket >> ByteSize >> SizeUncompressed;
+        m_addonSize = SizeUncompressed;
+        m_addonLenCompressed = ByteSize - 4;
+        m_addonCompressed = new uint8[ByteSize - 4];
+        recvPacket.read(m_addonCompressed, ByteSize - 4);
+        recvPacket >> account;
+
+
 
     // Read the content of the packet
-    recvPacket.read(digest, 20);
+    /*recvPacket.read(digest, 20);
     recvPacket.read_skip<uint64>();
     recvPacket.read_skip<uint32>();
     recvPacket >> clientSeed;
     recvPacket >> ClientBuild;
     recvPacket.read_skip<uint8>();
     recvPacket >> account;
-    recvPacket.read_skip<uint32>();                         // addon data size
+    recvPacket.read_skip<uint32>();                         // addon data size*/
 
-    DEBUG_LOG ("WorldSocket::HandleAuthSession: client %u, account %s, clientseed %X",
-                ClientBuild,
+
+    /*DEBUG_LOG ("WorldSocket::HandleAuthSession: client %u, account %s, clientseed %X",
+                mClientBuild,
                 account.c_str(),
-                clientSeed);
+                clientSeed);*/
 
     // Check the version of client trying to connect
-    if(!IsAcceptableClientBuild(ClientBuild))
+    if(!IsAcceptableClientBuild(mClientBuild))
     {
         packet.Initialize (SMSG_AUTH_RESPONSE, 1);
         packet << uint8 (AUTH_VERSION_MISMATCH);

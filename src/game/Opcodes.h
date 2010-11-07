@@ -88,15 +88,15 @@ enum Opcodes
     CMSG_AUTH_SRP6_BEGIN                            = 0x033,
     CMSG_AUTH_SRP6_PROOF                            = 0x034,
     CMSG_AUTH_SRP6_RECODE                           = 0x035,
-    CMSG_CHAR_CREATE                                = 0x036,
-    CMSG_CHAR_ENUM                                  = 0x037,
-    CMSG_CHAR_DELETE                                = 0x038,
+    CMSG_CHAR_CREATE                                = 0x2BF0, //4.0.1
+    CMSG_CHAR_ENUM                                  = 0x3F8, //4.0.1
+    CMSG_CHAR_DELETE                                = 0x8A78, //4.0.1
     SMSG_AUTH_SRP6_RESPONSE                         = 0x039,
-    SMSG_CHAR_CREATE                                = 0x03A,
-    SMSG_CHAR_ENUM                                  = 0x03B,
-    SMSG_CHAR_DELETE                                = 0x03C,
+    SMSG_CHAR_CREATE                                = 0xC211, //4.0.1
+    SMSG_CHAR_ENUM                                  = 0x429C, //4.0.1
+    SMSG_CHAR_DELETE                                = 0x278, //4.0.1
     CMSG_PLAYER_LOGIN                               = 0x03D,
-    SMSG_NEW_WORLD                                  = 0x03E,
+    SMSG_NEW_WORLD                                  = 0x4A5D, //4.0.1
     SMSG_TRANSFER_PENDING                           = 0x03F,
     SMSG_TRANSFER_ABORTED                           = 0x040,
     SMSG_CHARACTER_LOGIN_FAILED                     = 0x041,
@@ -131,7 +131,7 @@ enum Opcodes
     CMSG_GAMEOBJECT_QUERY                           = 0x05E,
     SMSG_GAMEOBJECT_QUERY_RESPONSE                  = 0x05F,
     CMSG_CREATURE_QUERY                             = 0x060,
-    SMSG_CREATURE_QUERY_RESPONSE                    = 0x061,
+    SMSG_CREATURE_QUERY_RESPONSE                    = 0x83B8, //4.0.1
     CMSG_WHO                                        = 0x062,
     SMSG_WHO                                        = 0x063,
     CMSG_WHOIS                                      = 0x064,
@@ -203,7 +203,7 @@ enum Opcodes
     CMSG_CHANNEL_UNBAN                              = 0x0A6,
     CMSG_CHANNEL_ANNOUNCEMENTS                      = 0x0A7,
     CMSG_CHANNEL_MODERATE                           = 0x0A8,
-    SMSG_UPDATE_OBJECT                              = 0x0A9,
+    SMSG_UPDATE_OBJECT                              = 0x8BF0, //4.0.1
     SMSG_DESTROY_OBJECT                             = 0x0AA,
     CMSG_USE_ITEM                                   = 0x0AB,
     CMSG_OPEN_ITEM                                  = 0x0AC,
@@ -284,7 +284,7 @@ enum Opcodes
     MSG_MOVE_HOVER                                  = 0x0F7,
     CMSG_TRIGGER_CINEMATIC_CHEAT                    = 0x0F8,
     CMSG_OPENING_CINEMATIC                          = 0x0F9,
-    SMSG_TRIGGER_CINEMATIC                          = 0x0FA,
+    SMSG_TRIGGER_CINEMATIC                          = 0x6310, //4.0.1
     CMSG_NEXT_CINEMATIC_CAMERA                      = 0x0FB,
     CMSG_COMPLETE_CINEMATIC                         = 0x0FC,
     SMSG_TUTORIAL_FLAGS                             = 0x0FD,
@@ -329,7 +329,7 @@ enum Opcodes
     SMSG_SET_FACTION_STANDING                       = 0x124,
     CMSG_SET_FACTION_ATWAR                          = 0x125,
     CMSG_SET_FACTION_CHEAT                          = 0x126,
-    SMSG_SET_PROFICIENCY                            = 0x127,
+    SMSG_SET_PROFICIENCY                            = 0x22D4, //4.0.1
     CMSG_SET_ACTION_BUTTON                          = 0x128,
     SMSG_ACTION_BUTTONS                             = 0x129,
     SMSG_INITIAL_SPELLS                             = 0x12A,
@@ -375,7 +375,7 @@ enum Opcodes
     SMSG_BREAK_TARGET                               = 0x152,
     CMSG_SAVE_PLAYER                                = 0x153,
     CMSG_SETDEATHBINDPOINT                          = 0x154,
-    SMSG_BINDPOINTUPDATE                            = 0x155,
+    SMSG_BINDPOINTUPDATE                            = 0xA255, //4.0.1
     CMSG_GETDEATHBINDZONE                           = 0x156,
     SMSG_BINDZONEREPLY                              = 0x157,
     SMSG_PLAYERBOUND                                = 0x158,
@@ -510,7 +510,7 @@ enum Opcodes
     SMSG_START_MIRROR_TIMER                         = 0x1D9,
     SMSG_PAUSE_MIRROR_TIMER                         = 0x1DA,
     SMSG_STOP_MIRROR_TIMER                          = 0x1DB,
-    CMSG_PING                                       = 0x1DC,
+    CMSG_PING                                       = 0x1001, //4.0.1
     SMSG_PONG                                       = 0x1DD,
     SMSG_CLEAR_COOLDOWN                             = 0x1DE,
     SMSG_GAMEOBJECT_PAGETEXT                        = 0x1DF,
@@ -526,9 +526,9 @@ enum Opcodes
     MSG_GM_SUMMON                                   = 0x1E9,
     SMSG_ITEM_TIME_UPDATE                           = 0x1EA,
     SMSG_ITEM_ENCHANT_TIME_UPDATE                   = 0x1EB,
-    SMSG_AUTH_CHALLENGE                             = 0x1EC,
-    CMSG_AUTH_SESSION                               = 0x1ED,
-    SMSG_AUTH_RESPONSE                              = 0x1EE,
+    SMSG_AUTH_CHALLENGE                             = 0x8500, //4.0.1
+    CMSG_AUTH_SESSION                               = 0x3000, //4.0.1
+    SMSG_AUTH_RESPONSE                              = 0xEB58, //4.0.1
     MSG_GM_SHOWLABEL                                = 0x1EF,
     CMSG_PET_CAST_SPELL                             = 0x1F0,
     MSG_SAVE_GUILD_EMBLEM                           = 0x1F1,
@@ -538,7 +538,7 @@ enum Opcodes
     SMSG_PARTYKILLLOG                               = 0x1F5,
     SMSG_COMPRESSED_UPDATE_OBJECT                   = 0x1F6,
     SMSG_PLAY_SPELL_IMPACT                          = 0x1F7,
-    SMSG_EXPLORATION_EXPERIENCE                     = 0x1F8,
+    SMSG_EXPLORATION_EXPERIENCE                     = 0x8B58, //4.0.1
     CMSG_GM_SET_SECURITY_GROUP                      = 0x1F9,
     CMSG_GM_NUKE                                    = 0x1FA,
     MSG_RANDOM_ROLL                                 = 0x1FB,
@@ -555,7 +555,7 @@ enum Opcodes
     SMSG_GMTICKET_CREATE                            = 0x206,
     CMSG_GMTICKET_UPDATETEXT                        = 0x207,
     SMSG_GMTICKET_UPDATETEXT                        = 0x208,
-    SMSG_ACCOUNT_DATA_TIMES                         = 0x209,
+    SMSG_ACCOUNT_DATA_TIMES                         = 0x82B5, //4.0.1
     CMSG_REQUEST_ACCOUNT_DATA                       = 0x20A,
     CMSG_UPDATE_ACCOUNT_DATA                        = 0x20B,
     SMSG_UPDATE_ACCOUNT_DATA                        = 0x20C,
@@ -745,8 +745,8 @@ enum Opcodes
     CMSG_ITEM_NAME_QUERY                            = 0x2C4,
     SMSG_ITEM_NAME_QUERY_RESPONSE                   = 0x2C5,
     SMSG_PET_ACTION_FEEDBACK                        = 0x2C6,
-    CMSG_CHAR_RENAME                                = 0x2C7,
-    SMSG_CHAR_RENAME                                = 0x2C8,
+    CMSG_CHAR_RENAME                                = 0xAB38, //4.0.1
+    SMSG_CHAR_RENAME                                = 0xA33C, //4.0.1
     CMSG_MOVE_SPLINE_DONE                           = 0x2C9,
     CMSG_MOVE_FALL_RESET                            = 0x2CA,
     SMSG_INSTANCE_SAVE_CREATED                      = 0x2CB,
@@ -941,12 +941,12 @@ enum Opcodes
     SMSG_FLIGHT_SPLINE_SYNC                         = 0x388,
     CMSG_SET_TAXI_BENCHMARK_MODE                    = 0x389,
     SMSG_JOINED_BATTLEGROUND_QUEUE                  = 0x38A,
-    SMSG_REALM_SPLIT                                = 0x38B,
-    CMSG_REALM_SPLIT                                = 0x38C,
+    SMSG_REALM_SPLIT                                = 0x4270, //4.0.1
+    CMSG_REALM_SPLIT                                = 0xAB58, //4.0.1
     CMSG_MOVE_CHNG_TRANSPORT                        = 0x38D,
     MSG_PARTY_ASSIGNMENT                            = 0x38E,
     SMSG_OFFER_PETITION_ERROR                       = 0x38F,
-    SMSG_TIME_SYNC_REQ                              = 0x390,
+    SMSG_TIME_SYNC_REQ                              = 0xA318, //4.0.1
     CMSG_TIME_SYNC_RESP                             = 0x391,
     CMSG_SEND_LOCAL_EVENT                           = 0x392,
     CMSG_SEND_GENERAL_TRIGGER                       = 0x393,
@@ -1116,7 +1116,7 @@ enum Opcodes
     SMSG_CALENDAR_SEND_EVENT                        = 0x437,
     SMSG_CALENDAR_FILTER_GUILD                      = 0x438,
     SMSG_CALENDAR_ARENA_TEAM                        = 0x439,
-    SMSG_CALENDAR_EVENT_INVITE                      = 0x43A,
+    SMSG_CALENDAR_EVENT_INVITE                      = 0xE2FC, //4.0.1
     SMSG_CALENDAR_EVENT_INVITE_REMOVED              = 0x43B,
     SMSG_CALENDAR_EVENT_STATUS                      = 0x43C,
     SMSG_CALENDAR_COMMAND_RESULT                    = 0x43D,
@@ -1173,8 +1173,8 @@ enum Opcodes
     CMSG_SET_CRITERIA_CHEAT                         = 0x470,
     SMSG_CALENDAR_UPDATE_INVITE_LIST3               = 0x471,
     CMSG_UNITANIMTIER_CHEAT                         = 0x472,
-    CMSG_CHAR_CUSTOMIZE                             = 0x473,
-    SMSG_CHAR_CUSTOMIZE                             = 0x474,
+    CMSG_CHAR_CUSTOMIZE                             = 0x250, //4.0.1
+    SMSG_CHAR_CUSTOMIZE                             = 0xE2B5, //4.0.1
     SMSG_PET_RENAMEABLE                             = 0x475,
     CMSG_REQUEST_VEHICLE_EXIT                       = 0x476,
     CMSG_REQUEST_VEHICLE_PREV_SEAT                  = 0x477,
@@ -1313,7 +1313,7 @@ enum Opcodes
     SMSG_UNKNOWN_1276                               = 0x4FC, // does nothing in 10554
     SMSG_LOOT_SLOT_CHANGED                          = 0x4FD, // EVENT_LOOT_SLOT_CHANGED
     UMSG_UNKNOWN_1278                               = 0x4FE, // not found 10596
-    CMSG_READY_FOR_ACCOUNT_DATA_TIMES               = 0x4FF, // lua: ReadyForAccountDataTimes
+    CMSG_READY_FOR_ACCOUNT_DATA_TIMES               = 0x6A99, // lua: ReadyForAccountDataTimes  //4.0.1
     CMSG_QUERY_QUESTS_COMPLETED                     = 0x500, // lua: QueryQuestsCompleted
     SMSG_QUERY_QUESTS_COMPLETED_RESPONSE            = 0x501, // response to CMSG_QUERY_QUESTS_COMPLETED
     CMSG_GM_REPORT_LAG                              = 0x502, // lua: GMReportLag
@@ -1393,6 +1393,7 @@ struct OpcodeHandler
 };
 
 extern OpcodeHandler opcodeTable[NUM_MSG_TYPES];
+
 
 /// Lookup opcode name for human understandable logging
 inline const char* LookupOpcodeName(uint16 id)

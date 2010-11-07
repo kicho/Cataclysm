@@ -71,7 +71,7 @@ bool LoginQueryHolder::Initialize()
         "position_x, position_y, position_z, map, orientation, taximask, cinematic, totaltime, leveltime, rest_bonus, logout_time, is_logout_resting, resettalents_cost,"
         "resettalents_time, trans_x, trans_y, trans_z, trans_o, transguid, extra_flags, stable_slots, at_login, zone, online, death_expire_time, taxi_path, dungeon_difficulty,"
         "arenaPoints, totalHonorPoints, todayHonorPoints, yesterdayHonorPoints, totalKills, todayKills, yesterdayKills, chosenTitle, knownCurrencies, watchedFaction, drunk,"
-        "health, power1, power2, power3, power4, power5, power6, power7, power8, power9, specCount, activeSpec, exploredZones, equipmentCache, ammoId, knownTitles, actionBars FROM characters WHERE guid = '%u'", GUID_LOPART(m_guid));
+        "health, power1, power2, power3, power4, power5, power6, power7, power8, power9, power10, specCount, activeSpec, exploredZones, equipmentCache, ammoId, knownTitles, actionBars FROM characters WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADGROUP,           "SELECT groupId FROM group_member WHERE memberGuid ='%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADBOUNDINSTANCES,  "SELECT id, permanent, map, difficulty, resettime FROM character_instance LEFT JOIN instance ON instance = id WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADAURAS,           "SELECT caster_guid,item_guid,spell,stackcount,remaincharges,basepoints0,basepoints1,basepoints2,maxduration0,maxduration1,maxduration2,remaintime0,remaintime1,remaintime2,effIndexMask FROM character_aura WHERE guid = '%u'", GUID_LOPART(m_guid));
@@ -137,11 +137,17 @@ class CharacterHandler
 
 void WorldSession::HandleCharEnum(QueryResult * result)
 {
-    WorldPacket data(SMSG_CHAR_ENUM, 100);                  // we guess size
+    uint32 numchar;
+ 
+        if(result)
+                numchar = result->GetRowCount();
+        else
+                numchar = 0;
 
-    uint8 num = 0;
 
-    data << num;
+    WorldPacket data(SMSG_CHAR_ENUM, 1+numchar * 200);                  // we guess size
+
+    data << uint8(numchar);
 
     if( result )
     {
@@ -150,17 +156,53 @@ void WorldSession::HandleCharEnum(QueryResult * result)
             uint32 guidlow = (*result)[0].GetUInt32();
             DETAIL_LOG("Build enum data for char guid %u from account %u.", guidlow, GetAccountId());
             if(Player::BuildEnumData(result, &data))
-                ++num;
+                ++numchar;
         }
         while( result->NextRow() );
 
         delete result;
     }
 
-    data.put<uint8>(0, num);
+    data.put<uint8>(0, numchar);
 
     SendPacket( &data );
 }
+
+/*void WorldSession::HandleCharEnum(QueryResult * result)
+{
+
+
+	uint32 numchar;
+ 
+        if(result)
+                numchar = result->GetRowCount();
+        else
+                numchar = 0;
+
+
+    WorldPacket data(SMSG_CHAR_ENUM, 1+numchar * 200);                  // we guess size
+
+    data << uint8(numchar);
+
+
+	
+    if (result)
+    {
+        do
+        {        
+				
+            uint32 guidlow = (*result)[0].GetUInt32();
+            sLog.outDetail("Loading char guid %u from account %u.",guidlow,GetAccountId());
+            if (Player::BuildEnumData(result, &data))
+                ++numchar;
+        }
+        while (result->NextRow());
+    }
+
+    data.put<uint8>(0, numchar);
+
+    SendPacket(&data);
+}*/
 
 void WorldSession::HandleCharEnumOpcode( WorldPacket & /*recv_data*/ )
 {

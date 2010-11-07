@@ -190,7 +190,7 @@ void World::AddSession(WorldSession* s)
 }
 
 void
-World::AddSession_ (WorldSession* s)
+World::AddSession_ (WorldSession* s, uint8 code, bool shortForm, uint32 queuePos, uint32 version)
 {
     MANGOS_ASSERT (s);
 
@@ -242,19 +242,38 @@ World::AddSession_ (WorldSession* s)
         return;
     }
 
-    WorldPacket packet(SMSG_AUTH_RESPONSE, 1 + 4 + 1 + 4 + 1);
+    /*WorldPacket packet(SMSG_AUTH_RESPONSE, 1 + 4 + 1 + 4 + 1);
     packet << uint8 (AUTH_OK);
     packet << uint32 (0);                                   // BillingTimeRemaining
     packet << uint8 (0);                                    // BillingPlanFlags
     packet << uint32 (0);                                   // BillingTimeRested
     packet << uint8 (s->Expansion());                       // 0 - normal, 1 - TBC, must be set in database manually for each account
-    s->SendPacket (&packet);
+    s->SendPacket (&packet);*/
+	WorldPacket packet(SMSG_AUTH_RESPONSE, 1 + 4 + 1 + 4 + 1 + (shortForm ? 0 : (4 + 1)));
+    packet << uint8(code);
+    packet << uint32(0);                                   // BillingTimeRemaining
+    packet << uint8(0);                                    // BillingPlanFlags
+    packet << uint32(0);                                   // BillingTimeRested
+    packet << uint16(Expansion());                          // 0 - normal, 1 - TBC, 2 - WOTLK, 3 - Cataclysm must be set in database manually for each account
+
+    if (!shortForm)
+    {
+        packet << uint32(queuePos);                             // Queue position
+        packet << uint8(0);                                     // Unk 3.3.0
+    }
+
+    SendPacket(&packet);
+}
 
     s->SendAddonsInfo();
 
-    WorldPacket pkt(SMSG_CLIENTCACHE_VERSION, 4);
+    /*WorldPacket pkt(SMSG_CLIENTCACHE_VERSION, 4);
     pkt << uint32(getConfig(CONFIG_UINT32_CLIENTCACHE_VERSION));
-    s->SendPacket(&pkt);
+    s->SendPacket(&pkt);*/
+
+	WorldPacket data(SMSG_CLIENTCACHE_VERSION, 4);
+    data << uint32(version);
+    SendPacket(&data);
 
     s->SendTutorialsData();
 
