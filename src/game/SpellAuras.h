@@ -369,8 +369,8 @@ class MANGOS_DLL_SPEC Aura
         void SetModifier(AuraType t, int32 a, uint32 pt, int32 miscValue);
         Modifier*       GetModifier()       { return &m_modifier; }
         Modifier const* GetModifier() const { return &m_modifier; }
-        int32 GetMiscValue() const { return m_spellAuraHolder->GetSpellProto()->EffectMiscValue[m_effIndex]; }
-        int32 GetMiscBValue() const { return m_spellAuraHolder->GetSpellProto()->EffectMiscValueB[m_effIndex]; }
+        int32 GetMiscValue() const { return m_spellEffect ? m_spellEffect->EffectMiscValue : 0; }
+        int32 GetMiscBValue() const { return m_spellEffect ? m_spellEffect->EffectMiscValueB : 0; }
         
         SpellEntry const* GetSpellProto() const { return GetHolder()->GetSpellProto(); }
         uint32 GetId() const{ return GetHolder()->GetSpellProto()->Id; }
@@ -456,6 +456,7 @@ class MANGOS_DLL_SPEC Aura
         Modifier m_modifier;
         SpellModifier *m_spellmod;
 
+        SpellEffectEntry const* m_spellEffect;
         time_t m_applyTime;
 
         int32 m_currentBasePoints;                          // cache SpellEntry::CalculateSimpleValue and use for set custom base points
