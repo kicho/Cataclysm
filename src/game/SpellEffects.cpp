@@ -1717,13 +1717,13 @@ void Spell::EffectDummy(SpellEffectEntry const* effect)
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
                         return;
 
-                    switch(eff_idx)
+                    switch(effect)//(eff_idx)
                     {
                         case EFFECT_INDEX_0:
                         {
                             Player* pPlayer = (Player*)m_caster;
 
-                            uint32 faction_id = m_currentBasePoints[eff_idx];
+                            uint32 faction_id = m_currentBasePoints[effect];
                             int32  rep_change = m_currentBasePoints[EFFECT_INDEX_1];
 
                             FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction_id);
@@ -4123,7 +4123,7 @@ void Spell::EffectSummonType(SpellEffectEntry const* effect)
                 case SUMMON_PROP_TYPE_SIEGE_VEH:
                 case SUMMON_PROP_TYPE_DRAKE_VEH:
                     // TODO
-                    EffectSummonVehicle(eff_idx);
+                    EffectSummonVehicle(effect);
                     break;
                 default:
                     sLog.outError("EffectSummonType: Unhandled summon type %u", summon_prop->Type);
@@ -4152,7 +4152,7 @@ void Spell::EffectSummonType(SpellEffectEntry const* effect)
         case SUMMON_PROP_GROUP_VEHICLE:
         {
             // TODO
-            EffectSummonVehicle(eff_idx);
+            EffectSummonVehicle(effect);
             break;
         }
         default:
@@ -8129,7 +8129,7 @@ void Spell::EffectRenamePet(SpellEffectEntry const* /*effect*/)
 
 void Spell::EffectSummonVehicle(SpellEffectIndex eff_idx)
 {
-    uint32 creature_entry = m_spellInfo->EffectMiscValue[eff_idx];
+    uint32 creature_entry = m_spellInfo->EffectMiscValue[effect];
     if(!creature_entry)
         return;
 

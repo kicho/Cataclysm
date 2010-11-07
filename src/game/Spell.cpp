@@ -2436,7 +2436,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_DYNAMIC_OBJECT_RIGHT_SIDE:
         {
             //This should be targeting of destructible objects by vehicles (ram spells...)
-            if(m_spellInfo->EffectImplicitTargetB[effIndex] == TARGET_AREAEFFECT_CUSTOM_2)
+            if(m_spellInfo->EffectImplicitTargetB[effect/*effIndex*/] == TARGET_AREAEFFECT_CUSTOM_2)
             {
                 //FIXME
                 break;

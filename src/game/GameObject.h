@@ -373,7 +373,7 @@ struct GameObjectInfo
             uint32 destroyedEvent;                          //14
             uint32 empty8;                                  //15
             uint32 debuildingTimeSecs;                      //16
-            uint32 empty10;                                 //17
+            uint32 empty9;                                 //17
             uint32 destructibleData;                        //18
             uint32 rebuildingEvent;                         //19
             uint32 empty10;                                 //20

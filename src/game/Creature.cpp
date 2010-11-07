@@ -1513,7 +1513,7 @@ bool Creature::IsImmuneToSpell(SpellEntry const* spellInfo)
     return Unit::IsImmuneToSpell(spellInfo);
 }
 
-bool Creature::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const
+bool Creature::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index, SpellEffectEntry const* spellEff) const
 {
     SpellEffectEntry const* spellEffect = spellInfo->GetSpellEffect(index);
 
@@ -1537,10 +1537,10 @@ bool Creature::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectInd
     // Heal immunity
     if (IsVehicle() && !(((Vehicle*)this)->GetVehicleFlags() & VF_CAN_BE_HEALED))
     {
-        switch(spellInfo->Effect[index])
+        switch(spellEff->Effect[index])
         {
             case SPELL_EFFECT_APPLY_AURA:
-                switch(spellInfo->EffectApplyAuraName[index])
+                switch(spellEff->EffectApplyAuraName[index])
                 {
                     case SPELL_AURA_PERIODIC_HEAL:
                     case SPELL_AURA_OBS_MOD_HEALTH:
