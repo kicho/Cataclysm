@@ -119,7 +119,8 @@ SpellCastTargets::SpellCastTargets()
     m_itemTargetGUID   = 0;
     m_itemTargetEntry  = 0;
 
-    m_srcX = m_srcY = m_srcZ = m_destX = m_destY = m_destZ = 0.0f;
+    m_srcX = m_srcY = m_srcZ = m_srcO = m_destX = m_destY = m_destZ = 0.0f;
+    m_elevation = m_speed = 0.0f;
     m_strTarget = "";
     m_targetMask = 0;
 }
@@ -256,6 +257,19 @@ void SpellCastTargets::read( ByteBuffer& data, Unit *caster )
         data >> m_destX >> m_destY >> m_destZ;
         if(!MaNGOS::IsValidMapCoord(m_destX, m_destY, m_destZ))
             throw ByteBufferException(false, data.rpos(), 0, data.size());
+
+        if( m_targetMask & TARGET_FLAG_SOURCE_LOCATION )
+        {
+            if(data.rpos() + 4 + 4 <= data.size())
+            {
+                data >> m_elevation >> m_speed;
+                // TODO: should also read
+                m_srcO = caster->GetOrientation();
+                //*data >> uint16 >> uint8 >> uint32 >> uint32;
+                //*data >> float >> float >> float >> float...
+            }
+        }
+
     }
 
     if( m_targetMask & TARGET_FLAG_STRING )
@@ -1590,9 +1604,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_TOTEM_FIRE:
         case TARGET_SELF:
         case TARGET_SELF2:
-        case TARGET_AREAEFFECT_CUSTOM_2:
+        {
+            // used for targeting gameobjects
             targetUnitMap.push_back(m_caster);
             break;
+        }
         case TARGET_RANDOM_ENEMY_CHAIN_IN_AREA:
         {
             m_targets.m_targetMask = 0;
@@ -1653,6 +1669,38 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
 
                 --t;
             }
+            break;
+        }
+		case TARGET_AREAEFFECT_CUSTOM_2:
+        {
+
+            float x, y, z;
+            if (targetMode == TARGET_OBJECT_AREA_SRC)
+            {
+                if (m_targets.m_targetMask & TARGET_FLAG_SOURCE_LOCATION)
+                {
+                    x = m_targets.m_srcX;
+                    y = m_targets.m_srcY;
+                    z = m_targets.m_srcZ;
+                }
+                else
+                    break;
+            }
+            else if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
+            {
+                x = m_targets.m_destX;
+                y = m_targets.m_destY;
+                z = m_targets.m_destZ;
+            }
+            else
+                break;
+
+            MaNGOS::GameObjectInRangeCheck check(m_caster, x, y, z, radius + 15.0f);
+            std::list<GameObject*> goList;
+            MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectInRangeCheck> searcher(goList, check);
+            m_caster->GetMap()->VisitGrid(x, y, radius, searcher);
+            for (std::list<GameObject*>::const_iterator itr = goList.begin(); itr != goList.end(); ++itr)
+               AddGOTarget(*itr, effIndex);
             break;
         }
         case TARGET_RANDOM_FRIEND_CHAIN_IN_AREA:
@@ -1861,6 +1909,9 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     break;
                 default:
                     FillAreaTargets(targetUnitMap, m_targets.m_destX, m_targets.m_destY, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+
+                    // exclude caster (this can be important if this not original caster, for example vehicle)
+                    targetUnitMap.remove(m_caster);
                     break;
             }
             break;
@@ -2350,7 +2401,13 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_DYNAMIC_OBJECT_LEFT_SIDE:
         case TARGET_DYNAMIC_OBJECT_RIGHT_SIDE:
         {
-            if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
+            //This should be targeting of destructible objects by vehicles (ram spells...)
+            if(m_spellInfo->EffectImplicitTargetB[effIndex] == TARGET_AREAEFFECT_CUSTOM_2)
+            {
+                //FIXME
+                break;
+            }
+            else if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
             {
                 float angle = m_caster->GetOrientation();
                 switch(targetMode)
@@ -3321,7 +3378,7 @@ void Spell::finish(bool ok)
         m_caster->resetAttackTimer(RANGED_ATTACK);*/
 
     // Clear combo at finish state
-    if(m_caster->GetTypeId() == TYPEID_PLAYER && NeedsComboPoints(m_spellInfo))
+    if((m_caster->GetTypeId() == TYPEID_PLAYER || ((Creature*)m_caster)->IsVehicle()) && NeedsComboPoints(m_spellInfo))
     {
         // Not drop combopoints if negative spell and if any miss on enemy exist
         bool needDrop = true;
@@ -3337,7 +3394,12 @@ void Spell::finish(bool ok)
             }
         }
         if (needDrop)
-            ((Player*)m_caster)->ClearComboPoints();
+        {
+            if(m_caster->GetTypeId() == TYPEID_PLAYER)
+                ((Player*)m_caster)->ClearComboPoints();
+            else
+                ((Player*)m_caster->GetCharmer())->ClearComboPoints();
+        }
     }
 
     // potions disabled by client, send event "not in combat" if need
@@ -4541,11 +4603,16 @@ SpellCastResult Spell::CheckCast(bool strict)
         return locRes;
 
     // not let players cast spells at mount (and let do it to creatures)
-    if (m_caster->IsMounted() && m_caster->GetTypeId()==TYPEID_PLAYER && !m_IsTriggeredSpell &&
+    if ((m_caster->IsMounted() || m_caster->GetVehicle() || m_caster->GetVehicleGUID()) && m_caster->GetTypeId()==TYPEID_PLAYER && !m_IsTriggeredSpell &&
         !IsPassiveSpell(m_spellInfo) && !(m_spellInfo->Attributes & SPELL_ATTR_CASTABLE_WHILE_MOUNTED))
     {
         if (m_caster->IsTaxiFlying())
             return SPELL_FAILED_NOT_ON_TAXI;
+        else if(m_caster->GetVehicleGUID() || m_caster->GetVehicle())
+        {
+            if(!(m_caster->m_movementInfo.GetVehicleSeatFlags() & SF_CAN_CAST))
+                return SPELL_FAILED_NOT_MOUNTED;
+        }
         else
             return SPELL_FAILED_NOT_MOUNTED;
     }
@@ -5381,31 +5448,46 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
             if(!_target->isAlive())
                 return SPELL_FAILED_BAD_TARGETS;
 
-            if(IsPositiveSpell(m_spellInfo->Id))
-            {
-                if(m_caster->IsHostileTo(_target))
-                    return SPELL_FAILED_BAD_TARGETS;
-            }
-            else
-            {
-                bool duelvsplayertar = false;
-                for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
-                {
-                                                            //TARGET_DUELVSPLAYER is positive AND negative
-                    duelvsplayertar |= (m_spellInfo->EffectImplicitTargetA[j] == TARGET_DUELVSPLAYER);
-                }
-                if(m_caster->IsFriendlyTo(target) && !duelvsplayertar)
-                {
-                    return SPELL_FAILED_BAD_TARGETS;
-                }
-            }
+            if(!IsValidSingleTargetSpell(_target))
+                return SPELL_FAILED_BAD_TARGETS;
         }
                                                             //cooldown
         if(((Creature*)m_caster)->HasSpellCooldown(m_spellInfo->Id))
             return SPELL_FAILED_NOT_READY;
     }
 
+    // NOTE : this is done twice, also in spell->prepare(&(spell->m_targets));
     return CheckCast(true);
+}
+
+bool Spell::IsValidSingleTargetEffect(Unit const* target, Targets type) const
+{
+    switch(type)
+    {
+        case TARGET_CHAIN_DAMAGE:
+            return !m_caster->IsFriendlyTo(target);
+        case TARGET_SINGLE_FRIEND:
+        case TARGET_AREAEFFECT_PARTY:
+            return m_caster->IsFriendlyTo(target);
+       case TARGET_SINGLE_PARTY:
+            return m_caster != target && m_caster->IsInPartyWith(target);
+        case TARGET_SINGLE_FRIEND_2:
+            return m_caster->IsInRaidWith(target);
+    }
+    return true;
+}
+
+bool Spell::IsValidSingleTargetSpell(Unit const* target) const
+{
+    for(int i = 0; i < 3; ++i)
+    {
+        if(!IsValidSingleTargetEffect(target, Targets(m_spellInfo->EffectImplicitTargetA[i])))
+            return false;
+        // Need to check B?
+        //if(!IsValidSingleTargetEffect(m_spellInfo->EffectImplicitTargetB[i], target)
+        //    return false;
+    }
+    return true;
 }
 
 SpellCastResult Spell::CheckCasterAuras() const

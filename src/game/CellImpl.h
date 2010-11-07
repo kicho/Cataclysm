@@ -315,4 +315,50 @@ inline void Cell::VisitAllObjects(const WorldObject *center_obj, T &visitor, flo
     cell.Visit(p, wnotifier, *center_obj->GetMap(), *center_obj, radius);
 }
 
+template<class T, class CONTAINER>
+inline void
+Cell::Visit(const CellPair &standing_cell, TypeContainerVisitor<T, CONTAINER> &visitor, Map &m, float radius, float x_off, float y_off) const
+{
+    if (standing_cell.x_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP || standing_cell.y_coord >= TOTAL_NUMBER_OF_CELLS_PER_MAP)
+        return;
+
+    int left = 0, right = 0, upper = 0, lower = 0;
+
+   // Origin = (CENTER_GRID_CELL_OFFSET, CENTER_GRID_CELL_OFFSET)
+    if(CENTER_GRID_CELL_OFFSET - x_off < radius)
+        ++right;
+    if(CENTER_GRID_CELL_OFFSET + x_off < radius)
+        ++left;
+    if(CENTER_GRID_CELL_OFFSET - y_off < radius)
+        ++upper;
+    if(CENTER_GRID_CELL_OFFSET + y_off < radius)
+        ++lower;
+
+    if(!left && !right && !upper && !lower)
+    {
+        m.Visit(*this, visitor);
+        return;
+    }
+
+    CellPair begin_cell = standing_cell;
+    CellPair end_cell = standing_cell;
+
+    begin_cell << left; //note: need change << if left > 1
+    begin_cell -= lower;
+    end_cell >> right;
+    end_cell += upper;
+
+    // loop the cell range
+    for(uint32 x = begin_cell.x_coord; x <= end_cell.x_coord; x++)
+    {
+        for(uint32 y = begin_cell.y_coord; y <= end_cell.y_coord; y++)
+        {
+            CellPair cell_pair(x,y);
+            Cell r_zone(cell_pair);
+            r_zone.data.Part.nocreate = data.Part.nocreate;
+            m.Visit(r_zone, visitor);
+        }
+    }
+}
+
 #endif

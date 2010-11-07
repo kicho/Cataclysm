@@ -39,7 +39,6 @@
 #include <bitset>
 #include <list>
 
-class Creature;
 class Unit;
 class WorldPacket;
 class InstanceData;
@@ -124,6 +123,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
 
         template<class T, class CONTAINER> void Visit(const Cell& cell, TypeContainerVisitor<T, CONTAINER> &visitor);
 
+		template<class NOTIFIER> void VisitGrid(const float& x, const float& y, float radius, NOTIFIER& notifier);
         bool IsRemovalGrid(float x, float y) const
         {
             GridPair p = MaNGOS::ComputeGridPair(x, y);
@@ -435,5 +435,20 @@ Map::Visit(const Cell& cell, TypeContainerVisitor<T, CONTAINER> &visitor)
         EnsureGridLoaded(cell);
         getNGrid(x, y)->Visit(cell_x, cell_y, visitor);
     }
+
+	};
+
+template<class NOTIFIER>
+inline void
+Map::VisitGrid(const float& x, const float& y, float radius, NOTIFIER& notifier)
+{
+    CellPair p(MaNGOS::ComputeCellPair(x, y));
+    Cell cell(p);
+    cell.data.Part.reserved = ALL_DISTRICT;
+    cell.SetNoCreate();
+
+    TypeContainerVisitor<NOTIFIER, GridTypeMapContainer> grid_object_notifier(notifier);
+   cell.Visit(p, grid_object_notifier, *this, radius, x, y);
 }
+
 #endif

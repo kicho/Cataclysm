@@ -53,6 +53,21 @@ ObjectAccessor::~ObjectAccessor()
     }
 }
 
+Creature*
+ObjectAccessor::GetAnyTypeCreature(WorldObject const &u, ObjectGuid guid)
+{
+    if(guid.IsPlayer() || !u.IsInWorld())
+        return NULL;
+
+    if(guid.IsPet())
+        return u.GetMap()->GetPet(guid);
+
+    if(guid.IsVehicle())
+        return u.GetMap()->GetVehicle(guid);
+
+    return u.GetMap()->GetCreature(guid);
+}
+
 Unit*
 ObjectAccessor::GetUnit(WorldObject const &u, ObjectGuid guid)
 {
@@ -62,10 +77,7 @@ ObjectAccessor::GetUnit(WorldObject const &u, ObjectGuid guid)
     if(guid.IsPlayer())
         return FindPlayer(guid);
 
-    if (!u.IsInWorld())
-        return NULL;
-
-    return u.GetMap()->GetAnyTypeCreature(guid);
+    return GetAnyTypeCreature(u, guid);
 }
 
 Corpse* ObjectAccessor::GetCorpseInMap(ObjectGuid guid, uint32 mapid)

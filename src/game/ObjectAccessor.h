@@ -40,6 +40,7 @@
 class Creature;
 class Unit;
 class GameObject;
+class Vehicle;
 class WorldObject;
 class Map;
 
@@ -100,13 +101,21 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
         // global (obj used for map only location local guid objects (pets currently)
         static Unit*   GetUnitInWorld(WorldObject const& obj, ObjectGuid guid);
 
-        // FIXME: map local object with global search
+        // map local object with global search
         static Creature*   GetCreatureInWorld(ObjectGuid guid)   { return FindHelper<Creature>(guid); }
         static GameObject* GetGameObjectInWorld(ObjectGuid guid) { return FindHelper<GameObject>(guid); }
+        static Pet*        GetGameObjectInWorld(ObjectGuid guid, Pet*        /*fake*/) { return FindHelper<Pet>(guid); }
+        static Vehicle*    GetGameObjectInWorld(ObjectGuid guid, Vehicle*    /*fake*/) { return FindHelper<Vehicle>(guid); }
 
         // Search player at any map in world and other objects at same map with `obj`
         // Note: recommended use Map::GetUnit version if player also expected at same map only
         static Unit* GetUnit(WorldObject const& obj, ObjectGuid guid);
+        static Creature* GetAnyTypeCreature(WorldObject const &, ObjectGuid guid);
+        //static Player* GetPlayer(Unit const &, uint64 guid) { return FindPlayer(guid); }
+        //static Corpse* GetCorpse(WorldObject const &u, uint64 guid);
+        //static Pet* GetPet(uint64 guid) { return GetObjectInWorld(guid, (Pet*)NULL); }
+        static Vehicle* GetVehicle(ObjectGuid guid) { return GetGameObjectInWorld(guid, (Vehicle*)NULL); }
+        //static Player* FindPlayer(uint64);
 
         // Player access
         static Player* FindPlayer(ObjectGuid guid);         // if need player at specific map better use Map::GetPlayer
@@ -174,6 +183,9 @@ inline Unit* ObjectAccessor::GetUnitInWorld(WorldObject const& obj, ObjectGuid g
 
     if (guid.IsPet())
         return obj.IsInWorld() ? obj.GetMap()->GetPet(guid) : NULL;
+
+    if (guid.IsVehicle())
+        return obj.IsInWorld() ? ((Unit*)obj.GetMap()->GetVehicle(guid)) : NULL;
 
     return GetCreatureInWorld(guid);
 }

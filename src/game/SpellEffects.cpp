@@ -57,6 +57,7 @@
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
+#include "Vehicle.h"
 
 pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
 {
@@ -147,9 +148,9 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectStuck,                                    // 84 SPELL_EFFECT_STUCK
     &Spell::EffectSummonPlayer,                             // 85 SPELL_EFFECT_SUMMON_PLAYER
     &Spell::EffectActivateObject,                           // 86 SPELL_EFFECT_ACTIVATE_OBJECT
-    &Spell::EffectNULL,                                     // 87 SPELL_EFFECT_WMO_DAMAGE (57 spells in 3.3.2)
-    &Spell::EffectNULL,                                     // 88 SPELL_EFFECT_WMO_REPAIR (2 spells in 3.3.2)
-    &Spell::EffectNULL,                                     // 89 SPELL_EFFECT_WMO_CHANGE (7 spells in 3.3.2)
+    &Spell::EffectWMODamage,                                // 87 SPELL_EFFECT_WMO_DAMAGE (57 spells in 3.3.2)
+    &Spell::EffectWMORepair,                                // 88 SPELL_EFFECT_WMO_REPAIR (2 spells in 3.3.2)
+    &Spell::EffectUnused,                                   // 89 SPELL_EFFECT_WMO_CHANGE
     &Spell::EffectKillCreditPersonal,                       // 90 SPELL_EFFECT_KILL_CREDIT              Kill credit but only for single person
     &Spell::EffectUnused,                                   // 91 SPELL_EFFECT_THREAT_ALL               one spell: zzOLDBrainwash
     &Spell::EffectEnchantHeldItem,                          // 92 SPELL_EFFECT_ENCHANT_HELD_ITEM
@@ -4052,7 +4053,7 @@ void Spell::EffectSummonType(SpellEffectIndex eff_idx)
                 case SUMMON_PROP_TYPE_SIEGE_VEH:
                 case SUMMON_PROP_TYPE_DRAKE_VEH:
                     // TODO
-                    // EffectSummonVehicle(i);
+                    EffectSummonVehicle(eff_idx);
                     break;
                 default:
                     sLog.outError("EffectSummonType: Unhandled summon type %u", summon_prop->Type);
@@ -4081,7 +4082,7 @@ void Spell::EffectSummonType(SpellEffectIndex eff_idx)
         case SUMMON_PROP_GROUP_VEHICLE:
         {
             // TODO
-            // EffectSummonVehicle(i);
+            EffectSummonVehicle(eff_idx);
             break;
         }
         default:
@@ -6766,13 +6767,15 @@ void Spell::EffectAddComboPoints(SpellEffectIndex /*eff_idx*/)
     if(!unitTarget)
         return;
 
-    if(m_caster->GetTypeId() != TYPEID_PLAYER)
-        return;
-
     if(damage <= 0)
         return;
 
-    ((Player*)m_caster)->AddComboPoints(unitTarget, damage);
+    if(m_caster->GetTypeId() != TYPEID_PLAYER)
+    {
+        if(((Creature*)m_caster)->IsVehicle())
+            ((Player*)m_caster->GetCharmer())->AddComboPoints(unitTarget, damage);
+    }else
+        ((Player*)m_caster)->AddComboPoints(unitTarget, damage);
 }
 
 void Spell::EffectDuel(SpellEffectIndex eff_idx)
@@ -8050,6 +8053,54 @@ void Spell::EffectRenamePet(SpellEffectIndex /*eff_idx*/)
     unitTarget->RemoveByteFlag(UNIT_FIELD_BYTES_2, 2, UNIT_CAN_BE_RENAMED);
 }
 
+void Spell::EffectSummonVehicle(SpellEffectIndex eff_idx)
+{
+    uint32 creature_entry = m_spellInfo->EffectMiscValue[eff_idx];
+    if(!creature_entry)
+        return;
+
+    float px, py, pz;
+    // If dest location if present
+    if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
+    {
+        // Summon unit in dest location
+        px = m_targets.m_destX;
+        py = m_targets.m_destY;
+        pz = m_targets.m_destZ;
+    }
+    // Summon if dest location not present near caster
+    else
+        m_caster->GetClosePoint(px, py, pz, 1.0f);
+
+    Vehicle *v = m_caster->SummonVehicle(creature_entry, px, py, pz, m_caster->GetOrientation());
+    if(!v)
+        return;
+
+    v->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
+    v->SetCreatorGuid(m_caster->GetGUID());
+
+    if(damage)
+    {
+        m_caster->CastSpell(v, damage, true);
+        m_caster->EnterVehicle(v, 0);
+    }
+    int32 duration = GetSpellMaxDuration(m_spellInfo);
+    if(duration > 0)
+        v->SetSpawnDuration(duration);
+}
+
+void Spell::EffectDamageBuilding(SpellEffectIndex eff_idx)
+{
+    if(!gameObjTarget)
+        return;
+
+    if(gameObjTarget->GetGoType() != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+        return;
+
+    // NOTE : this can be increased by scaling stat system in vehicles
+    gameObjTarget->DealSiegeDamage(damage);
+}
+
 void Spell::EffectPlayMusic(SpellEffectIndex eff_idx)
 {
     if(!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
@@ -8193,4 +8244,38 @@ void Spell::EffectTeachTaxiNode( SpellEffectIndex eff_idx )
         data << uint8( 1 );
         player->SendDirectMessage( &data );
     }
+}
+
+void Spell::EffectWMODamage(SpellEffectIndex eff_idx)
+{
+    if (!gameObjTarget || gameObjTarget->GetGoType() != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING || !gameObjTarget->GetHealth())
+        return;
+    Unit *caster = m_originalCaster;
+    if (!caster)
+        return;
+
+    FactionTemplateEntry const *caster_ft = caster->getFactionTemplateEntry();
+    FactionTemplateEntry const *go_ft = sFactionTemplateStore.LookupEntry(gameObjTarget->GetUInt32Value(GAMEOBJECT_FACTION));
+    // Do not allow to damage GO's of friendly factions (ie: Wintergrasp Walls)
+    if (!caster_ft || !go_ft || caster_ft->IsFriendlyTo(*go_ft))
+        return;
+
+    gameObjTarget->DamageTaken(caster, uint32(damage));
+
+    WorldPacket data(SMSG_DESTRUCTIBLE_BUILDING_DAMAGE, 8+8+8+4+4);
+    data << gameObjTarget->GetPackGUID();
+    data << caster->GetPackGUID();
+    if (Unit *who = caster->GetCharmerOrOwner()) //check for pet / vehicle
+        data << who->GetPackGUID();
+   else
+        data << caster->GetPackGUID();
+    data << uint32(damage);
+    data << uint32(m_spellInfo->Id);
+    gameObjTarget->SendMessageToSet(&data, false);
+}
+
+void Spell::EffectWMORepair(SpellEffectIndex eff_idx)
+{
+    if (gameObjTarget && gameObjTarget->GetGoType() == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+        gameObjTarget->Rebuild(m_caster);
 }

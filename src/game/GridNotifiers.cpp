@@ -93,7 +93,10 @@ VisibleNotifier::Notify()
     {
         // target aura duration for caster show only if target exist at caster client
         if ((*vItr) != &player && (*vItr)->isType(TYPEMASK_UNIT))
+        {
             player.SendAurasForTarget((Unit*)(*vItr));
+            ((Unit*)(*vItr))->SendHeartBeat(false);
+        }
 
         // non finished movements show to player
         if ((*vItr)->GetTypeId()==TYPEID_UNIT && ((Creature*)(*vItr))->isAlive())

@@ -437,6 +437,12 @@ enum VehicleFlags
 
 enum VehicleSeatFlags
 {
+    SEAT_FREE                       = 0x01,                 // free seat
+    SEAT_FULL                       = 0x02,                 // seat occupied by player/creature
+    // special cases
+    SEAT_VEHICLE_FREE               = 0x04,                 // seat occupied by vehicle, but that vehicle is free
+    SEAT_VEHICLE_FULL               = 0x08,                 // seat occupied by vehicle and that vehicle is full too
+
     SEAT_FLAG_HIDE_PASSENGER        = 0x00000200,           // Passenger is hidden
     SEAT_FLAG_CAN_CONTROL           = 0x00000800,           // Lua_UnitInVehicleControlSeat
     SEAT_FLAG_CAN_ATTACK            = 0x00004000,           // Can attack, cast spells and use items from vehicle?
