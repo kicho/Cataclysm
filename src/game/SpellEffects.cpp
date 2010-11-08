@@ -1717,13 +1717,13 @@ void Spell::EffectDummy(SpellEffectEntry const* effect)
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
                         return;
 
-                    switch(effect)//(eff_idx)
+					switch(effect->EffectIndex)
                     {
                         case EFFECT_INDEX_0:
                         {
                             Player* pPlayer = (Player*)m_caster;
 
-                            uint32 faction_id = m_currentBasePoints[effect];
+                            uint32 faction_id = m_currentBasePoints[EFFECT_INDEX_1];
                             int32  rep_change = m_currentBasePoints[EFFECT_INDEX_1];
 
                             FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction_id);
@@ -8127,9 +8127,12 @@ void Spell::EffectRenamePet(SpellEffectEntry const* /*effect*/)
     unitTarget->RemoveByteFlag(UNIT_FIELD_BYTES_2, 2, UNIT_CAN_BE_RENAMED);
 }
 
-void Spell::EffectSummonVehicle(SpellEffectIndex eff_idx)
+void Spell::EffectSummonVehicle(SpellEffectEntry const* effect)
 {
-    uint32 creature_entry = m_spellInfo->EffectMiscValue[effect];
+	//SpellEffectEntry const *spellEffect = m_spellInfo->GetSpellEffect(effect);
+	m_spellInfo->GetEffectMiscValue(SpellEffectIndex(effect->EffectIndex));
+	uint32 creature_entry = m_spellInfo->GetEffectMiscValue(SpellEffectIndex(effect->EffectIndex));
+    //uint32 creature_entry = m_spellInfo->EffectMiscValue[effect];
     if(!creature_entry)
         return;
 
@@ -8163,7 +8166,7 @@ void Spell::EffectSummonVehicle(SpellEffectIndex eff_idx)
         v->SetSpawnDuration(duration);
 }
 
-void Spell::EffectDamageBuilding(SpellEffectIndex eff_idx)
+void Spell::EffectDamageBuilding(SpellEffectEntry const* effect)
 {
     if(!gameObjTarget)
         return;
@@ -8320,7 +8323,7 @@ void Spell::EffectTeachTaxiNode(SpellEffectEntry const* effect)
     }
 }
 
-void Spell::EffectWMODamage(SpellEffectIndex eff_idx)
+void Spell::EffectWMODamage(SpellEffectEntry const* effect)//SpellEntry const* spellInfo, SpellEffectIndex effIndex)
 {
     if (!gameObjTarget || gameObjTarget->GetGoType() != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING || !gameObjTarget->GetHealth())
         return;
@@ -8348,7 +8351,7 @@ void Spell::EffectWMODamage(SpellEffectIndex eff_idx)
     gameObjTarget->SendMessageToSet(&data, false);
 }
 
-void Spell::EffectWMORepair(SpellEffectIndex eff_idx)
+void Spell::EffectWMORepair(SpellEffectEntry const* effect)//SpellEntry const* spellInfo, SpellEffectIndex index)
 {
     if (gameObjTarget && gameObjTarget->GetGoType() == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
         gameObjTarget->Rebuild(m_caster);

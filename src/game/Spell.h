@@ -337,15 +337,15 @@ class Spell
         void EffectQuestFail(SpellEffectEntry const* effect);
         void EffectActivateRune(SpellEffectEntry const* effect);
         void EffectTeachTaxiNode(SpellEffectEntry const* effect);
-		void EffectWMODamage(SpellEffectIndex eff_idx);
-        void EffectWMORepair(SpellEffectIndex eff_idx);
+		void EffectWMODamage(SpellEffectEntry const* effect);//SpellEffectIndex eff_idx);
+        void EffectWMORepair(SpellEffectEntry const* effect);//SpellEffectIndex eff_idx);
         void EffectTitanGrip(SpellEffectEntry const* effect);
         void EffectEnchantItemPrismatic(SpellEffectEntry const* effect);
         void EffectPlayMusic(SpellEffectEntry const* effect);
         void EffectSpecCount(SpellEffectEntry const* effect);
         void EffectActivateSpec(SpellEffectEntry const* effect);
-		void EffectSummonVehicle(SpellEffectIndex eff_idx);
-        void EffectDamageBuilding(SpellEffectIndex eff_idx);
+		void EffectSummonVehicle(SpellEffectEntry const* effect);//SpellEffectIndex eff_idx);
+        void EffectDamageBuilding(SpellEffectEntry const* effect);//SpellEffectIndex eff_idx);
 
         Spell(Unit* caster, SpellEntry const *info, bool triggered, ObjectGuid originalCasterGUID = ObjectGuid(), SpellEntry const* triggeredBy = NULL);
         ~Spell();

@@ -2436,7 +2436,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_DYNAMIC_OBJECT_RIGHT_SIDE:
         {
             //This should be targeting of destructible objects by vehicles (ram spells...)
-            if(m_spellInfo->EffectImplicitTargetB[effect/*effIndex*/] == TARGET_AREAEFFECT_CUSTOM_2)
+            if(spellEffect->EffectImplicitTargetB == TARGET_AREAEFFECT_CUSTOM_2)
             {
                 //FIXME
                 break;
@@ -5591,8 +5591,10 @@ bool Spell::IsValidSingleTargetSpell(Unit const* target) const
 {
     for(int i = 0; i < 3; ++i)
     {
-        if(!IsValidSingleTargetEffect(target, Targets(m_spellInfo->EffectImplicitTargetA[i])))
-            return false;
+		if(!IsValidSingleTargetEffect(m_spellInfo->GetEffectImplicitTargetAByIndex[i], target))
+			return false;
+		/*if(!IsValidSingleTargetEffect(target, Targets(m_spellInfo->EffectImplicitTargetA[i])))
+            return false;*/
         // Need to check B?
         //if(!IsValidSingleTargetEffect(m_spellInfo->EffectImplicitTargetB[i], target)
         //    return false;
