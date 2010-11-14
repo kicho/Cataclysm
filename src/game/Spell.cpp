@@ -5591,10 +5591,12 @@ bool Spell::IsValidSingleTargetSpell(Unit const* target) const
 {
     for(int i = 0; i < 3; ++i)
     {
-		if(!IsValidSingleTargetEffect(m_spellInfo->GetEffectImplicitTargetAByIndex[i], target))
-			return false;
-		/*if(!IsValidSingleTargetEffect(target, Targets(m_spellInfo->EffectImplicitTargetA[i])))
-            return false;*/
+		/*SpellEffectEntry const* spellEffect = m_spellInfo->GetSpellEffect(SpellEffectIndex(i));
+		//if(!IsValidSingleTargetEffect(spellEffect->EffectImplicitTargetA, target))
+		//if(!IsValidSingleTargetEffect(target, Targets(m_spellInfo->GetEffectImplicitTargetAByIndex(SpellEffectIndex(i)))))
+		//if(!IsValidSingleTargetEffect(spellEffect->EffectImplicitTargetA[i], target))//, m_spellInfo->GetEffectImplicitTargetAByIndex(SpellEffectIndex(i))))
+			return false;*/
+
         // Need to check B?
         //if(!IsValidSingleTargetEffect(m_spellInfo->EffectImplicitTargetB[i], target)
         //    return false;

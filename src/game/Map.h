@@ -448,7 +448,7 @@ Map::VisitGrid(const float& x, const float& y, float radius, NOTIFIER& notifier)
 {
     CellPair p(MaNGOS::ComputeCellPair(x, y));
     Cell cell(p);
-    cell.data.Part.reserved = ALL_DISTRICT;
+    //cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();
 
     TypeContainerVisitor<NOTIFIER, GridTypeMapContainer> grid_object_notifier(notifier);
