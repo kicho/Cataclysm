@@ -67,7 +67,7 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
         }
 
         void Initialize(void);
-        void Update(const uint32 time, const uint32 diff);
+        void Update(uint32);
 
         void SetGridCleanUpDelay(uint32 t)
         {
@@ -171,7 +171,7 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
         typedef MaNGOS::ClassLevelLockable<MapManager, ACE_Thread_Mutex>::Lock Guard;
         uint32 i_gridCleanUpDelay;
         MapMapType i_maps;
-        ShortIntervalTimer i_timer;
+        IntervalTimer i_timer;
 };
 
 #define sMapMgr MapManager::Instance()

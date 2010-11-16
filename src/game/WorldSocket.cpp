@@ -627,7 +627,7 @@ int WorldSocket::handle_input_missing_data (void)
         }
     }
 
-    return n == recv_size ? 1 : 2;
+    return size_t(n) == recv_size ? 1 : 2;
 }
 
 int WorldSocket::cancel_wakeup_output (GuardType& g)
@@ -817,10 +817,10 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     recvPacket.read_skip<uint32>();                         // addon data size*/
 
 
-    /*DEBUG_LOG ("WorldSocket::HandleAuthSession: client %u, account %s, clientseed %X",
-                mClientBuild,
+    DEBUG_LOG ("WorldSocket::HandleAuthSession: client build %u, account %s, clientseed %X",
+                ClientBuild,
                 account.c_str(),
-                clientSeed);*/
+                clientSeed);
 
     // Check the version of client trying to connect
     if(!IsAcceptableClientBuild(ClientBuild))

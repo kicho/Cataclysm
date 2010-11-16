@@ -343,7 +343,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
     public:
         virtual ~WorldObject ( ) {}
 
-        virtual void Update(uint32 /*update_diff*/, uint32 /*tick_diff*/) { }
+        virtual void Update ( uint32 /*time_diff*/ ) { }
 
         void _Create( uint32 guidlow, HighGuid guidhigh, uint32 phaseMask);
 
@@ -495,7 +495,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         ViewPoint& GetViewPoint() { return m_viewPoint; }
 
         Vehicle* SummonVehicle(uint32 id, float x, float y, float z, float ang, uint32 vehicleId = NULL);
-
 
     protected:
         explicit WorldObject();

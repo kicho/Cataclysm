@@ -1972,6 +1972,9 @@ enum CreatureTypeFlags
     CREATURE_TYPEFLAGS_UNK27            = 0x04000000,       // creature has no type, or forces creature to be considered as in party, may be related to creature assistance
     CREATURE_TYPEFLAGS_UNK28            = 0x08000000,       // used in Lua_ForceGossip
     CREATURE_TYPEFLAGS_UNK29            = 0x10000000,       // no idea, but it used by client
+    CREATURE_TYPEFLAGS_UNK30            = 0x20000000,
+    CREATURE_TYPEFLAGS_UNK31            = 0x40000000,
+    CREATURE_TYPEFLAGS_QUEST_BOSS       = 0x80000000,       // Lua_UnitIsQuestBoss
 };
 
 enum CreatureEliteType
@@ -2511,6 +2514,7 @@ enum DiminishingGroup
     DIMINISHING_LIMITONLY
 };
 
+<<<<<<< HEAD
 
 /* NOTE : vehicles and seats has their own flags in DBC,
 but for now, they are too unknown for us, to use them */
@@ -2534,6 +2538,18 @@ enum CustomVehicleSeatFLags
     SF_CAN_CAST                     = 0x0004,                   // player/npc can rotate, and cast OWN spells
     SF_UNACCESSIBLE                 = 0x0008                    // player cant enter this seat by normal way (only by script)
 };
+=======
+enum InstanceResetMethod
+{
+    INSTANCE_RESET_ALL,
+    INSTANCE_RESET_CHANGE_DIFFICULTY,
+    INSTANCE_RESET_GLOBAL,
+    INSTANCE_RESET_GROUP_DISBAND,
+    INSTANCE_RESET_GROUP_JOIN,
+    INSTANCE_RESET_RESPAWN_DELAY
+};
+
+>>>>>>> a813becca7e13281d4dc66d89995fba7b3225e21
 enum ResponseCodes
 {
     RESPONSE_SUCCESS                                       = 0x00,
@@ -2779,9 +2795,9 @@ enum TradeStatus
 
 // we need to stick to 1 version or half of the stuff will work for someone
 // others will not and opposite
-// will only support WoW, WoW:TBC, WoW:WotLK and WoW:Cataclysm 4.0.1-13131, 4.0.3-13221, 4.0.0-12911 and 3.3.5a-12340...
+// will only support WoW, WoW:TBC, WoW:WotLK and WoW:Cataclysm 4.0.1-13131, 4.0.3-13287, 4.0.3-13221, 4.0.0-12911 and 3.3.5a-12340...
 
-#define EXPECTED_MANGOSD_CLIENT_BUILD        {13131, 13221, 12911, 12340, 0}
+#define EXPECTED_MANGOSD_CLIENT_BUILD        {13131, 13287, 13221, 12911, 12340, 0}
 
 // max supported expansion level in mangosd
 // NOTE: not set it more that supported by targeted client version with all expansions installed

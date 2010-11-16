@@ -1580,7 +1580,7 @@ struct SpellPowerEntry
     uint32    manaCostPerlevel;                             // 46       m_manaCostPerLevel
     uint32    ManaCostPercentage;                           // 144      m_manaCostPct
     uint32    manaPerSecond;                                // 47       m_manaPerSecond
-    //uint32  PowerDisplayId;                               // 168      PowerDisplay.dbc, new in 3.1
+    //uint32  PowerDisplayId;                               // 168      m_powerDisplayID - id from PowerDisplay.dbc, new in 3.1
     //uint32  unk1;                                         // 6        4.0.0
 };
 
@@ -1647,7 +1647,7 @@ struct MANGOS_DLL_SPEC SpellEntry
     uint32    AttributesEx4;                                // 5        m_attributesExD
     uint32    AttributesEx5;                                // 6        m_attributesExE
     uint32    AttributesEx6;                                // 7        m_attributesExF
-    // uint32 unk_320_1;                                    // 8        3.2.0 (0x20 - totems, 0x4 - paladin auras, etc...)
+    uint32    AttributesEx7;                                // 8        m_attributesExG (0x20 - totems, 0x4 - paladin auras, etc...)
     // uint32 someFlags;                                    // 9        4.0.0
     // uint32 unk_400_1;                                    // 10       4.0.0
     uint32    CastingTimeIndex;                             // 11       m_castingTimeIndex
@@ -1665,7 +1665,7 @@ struct MANGOS_DLL_SPEC SpellEntry
     uint32    SchoolMask;                                   // 24       m_schoolMask
     uint32    runeCostID;                                   // 25       m_runeCostID
     //uint32    spellMissileID;                             // 26       m_spellMissileID not used
-    //uint32  spellDescriptionVariableID;                   // 27       3.2.0
+    //uint32  spellDescriptionVariableID;                   // 27       m_spellDescriptionVariableID, 3.2.0
     uint32  SpellDifficultyId;                              // 28       m_spellDifficultyID - id from SpellDifficulty.dbc
     //float unk_f1;                                         // 29
     uint32 SpellScalingId;                                  // 30       SpellScaling.dbc
@@ -1936,6 +1936,12 @@ struct TaxiPathNodeEntry
     uint32    delay;                                        // 8        m_delay
     uint32    arrivalEventID;                               // 9        m_arrivalEventID
     uint32    departureEventID;                             // 10       m_departureEventID
+};
+
+struct TeamContributionPoints
+{
+    //uint32    Entry;                                      // 0
+    float     Value;                                        // 1 (???)
 };
 
 struct TotemCategoryEntry

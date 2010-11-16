@@ -1659,8 +1659,9 @@ void Spell::EffectDummy(SpellEffectEntry const* effect)
                                 m_caster->CastSpell(m_caster, spellID, true, NULL);
                             return;
                         }
-                        case EFFECT_INDEX_1:
-                            return;                         // additional data for dummy[0]
+                        case EFFECT_INDEX_1:                // additional data for dummy[0]
+                        case EFFECT_INDEX_2:
+                            return;                         
                     }
                     return;
                 }
@@ -1717,27 +1718,22 @@ void Spell::EffectDummy(SpellEffectEntry const* effect)
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
                         return;
 
-					switch(effect->EffectIndex)
+                    if (effect->EffectIndex == EFFECT_INDEX_0)
                     {
-                        case EFFECT_INDEX_0:
-                        {
-                            Player* pPlayer = (Player*)m_caster;
+                        Player* pPlayer = (Player*)m_caster;
 
-                            uint32 faction_id = m_currentBasePoints[EFFECT_INDEX_1];
-                            int32  rep_change = m_currentBasePoints[EFFECT_INDEX_1];
+                        uint32 faction_id = m_currentBasePoints[effect->EffectIndex];
+                        int32  rep_change = m_currentBasePoints[EFFECT_INDEX_1];
 
-                            FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction_id);
+                        FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction_id);
 
-                            if (!factionEntry)
-                                return;
+                        if (!factionEntry)
+                            return;
 
-                            // set rep to baserep + basepoints (expecting spillover for oposite faction -> become hated)
-                            pPlayer->GetReputationMgr().SetReputation(factionEntry, rep_change);
-                            break;
-                        }
-                        case EFFECT_INDEX_2:
-                            // unclear what this effect is for.
-                            break;
+                        // set rep to baserep + basepoints (expecting spillover for oposite faction -> become hated)
+                        pPlayer->GetReputationMgr().SetReputation(factionEntry, rep_change);
+
+                        // EFFECT_INDEX_2 most likely update at war state, we already handle this in SetReputation
                     }
 
                     return;
@@ -3845,8 +3841,8 @@ void Spell::EffectOpenLock(SpellEffectEntry const* effect)
     {
         GameObjectInfo const* goInfo = gameObjTarget->GetGOInfo();
         // Arathi Basin banner opening !
-        if (goInfo->type == GAMEOBJECT_TYPE_BUTTON && goInfo->button.noDamageImmune ||
-            goInfo->type == GAMEOBJECT_TYPE_GOOBER && goInfo->goober.losOK)
+        if ((goInfo->type == GAMEOBJECT_TYPE_BUTTON && goInfo->button.noDamageImmune) ||
+            (goInfo->type == GAMEOBJECT_TYPE_GOOBER && goInfo->goober.losOK))
         {
             //CanUseBattleGroundObject() already called in CheckCast()
             // in battleground check
@@ -4156,7 +4152,8 @@ void Spell::EffectSummonType(SpellEffectEntry const* effect)
             break;
         }
         default:
-            sLog.outError("EffectSummonType: Unhandled summon group type %u", summon_prop->Group);
+            // EffectSummonVehicle(i);
+            sLog.outDebug("EffectSummonType: Unhandled summon group type SUMMON_PROP_GROUP_VEHICLE(%u)", summon_prop->Group);
             break;
     }
 }
@@ -5879,7 +5876,7 @@ void Spell::EffectScriptEffect(SpellEffectEntry const* effect)
                     if (const SpellEntry *pSpell = sSpellStore.LookupEntry(m_spellInfo->CalculateSimpleValue(SpellEffectIndex(effect->EffectIndex))))
                     {
                         // if we used item at least once...
-                        if (pTarget->IsTemporarySummon() && pTarget->GetEntry() == pSpell->GetEffectMiscValue(SpellEffectIndex(effect->EffectIndex)))
+                        if (pTarget->IsTemporarySummon() && int32(pTarget->GetEntry()) == pSpell->GetEffectMiscValue(SpellEffectIndex(effect->EffectIndex)))
                         {
                             TemporarySummon* pSummon = (TemporarySummon*)pTarget;
 
