@@ -2514,7 +2514,15 @@ enum DiminishingGroup
     DIMINISHING_LIMITONLY
 };
 
-<<<<<<< HEAD
+enum InstanceResetMethod
+{
+    INSTANCE_RESET_ALL,
+    INSTANCE_RESET_CHANGE_DIFFICULTY,
+    INSTANCE_RESET_GLOBAL,
+    INSTANCE_RESET_GROUP_DISBAND,
+    INSTANCE_RESET_GROUP_JOIN,
+    INSTANCE_RESET_RESPAWN_DELAY
+};
 
 /* NOTE : vehicles and seats has their own flags in DBC,
 but for now, they are too unknown for us, to use them */
@@ -2538,18 +2546,7 @@ enum CustomVehicleSeatFLags
     SF_CAN_CAST                     = 0x0004,                   // player/npc can rotate, and cast OWN spells
     SF_UNACCESSIBLE                 = 0x0008                    // player cant enter this seat by normal way (only by script)
 };
-=======
-enum InstanceResetMethod
-{
-    INSTANCE_RESET_ALL,
-    INSTANCE_RESET_CHANGE_DIFFICULTY,
-    INSTANCE_RESET_GLOBAL,
-    INSTANCE_RESET_GROUP_DISBAND,
-    INSTANCE_RESET_GROUP_JOIN,
-    INSTANCE_RESET_RESPAWN_DELAY
-};
 
->>>>>>> a813becca7e13281d4dc66d89995fba7b3225e21
 enum ResponseCodes
 {
     RESPONSE_SUCCESS                                       = 0x00,

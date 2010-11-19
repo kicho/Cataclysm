@@ -1348,7 +1348,6 @@ enum Opcodes
     CMSG_UNKNOWN_1296                               = 0x510, // something with networking
     SMSG_FORCE_SEND_QUEUED_PACKETS                  = 0x511, //
     CMSG_REDIRECTION_AUTH_PROOF                     = 0x3081, //4.0.1 // something with networking //4.0.1
-	CMSG_REDIRECT_AUTH_PROOF                        = 0x3081, //4.0.1
     UMSG_UNKNOWN_1299                               = 0x513, // not found
     SMSG_COMBAT_LOG_MULTIPLE                        = 0x514, // SMSG, multi combatlog
     SMSG_LFG_OPEN_FROM_GOSSIP                       = 0x515, // event EVENT_LFG_OPEN_FROM_GOSSIP (opens dungeon finder, probably for outdoor bosses)

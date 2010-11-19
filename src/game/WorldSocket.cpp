@@ -820,7 +820,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     DEBUG_LOG ("WorldSocket::HandleAuthSession: client build %u, account %s, clientseed %X",
                 ClientBuild,
                 account.c_str(),
-                clientSeed);
+                ClientSeed);
 
     // Check the version of client trying to connect
     if(!IsAcceptableClientBuild(ClientBuild))
