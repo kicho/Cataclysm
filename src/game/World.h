@@ -431,7 +431,7 @@ class World
         ~World();
 
         WorldSession* FindSession(uint32 id) const;
-        void AddSession(WorldSession *s);
+        void AddSession(WorldSession* s);
         bool RemoveSession(uint32 id);
         /// Get the number of current active sessions
         void UpdateMaxSessionCounters();
@@ -668,7 +668,7 @@ class World
         Queue m_QueuedPlayer;
 
         //sessions that are added async
-        void AddSession_(WorldSession* s);
+        void AddSession_(WorldSession* s, uint8 code, bool shortForm, uint32 queuePos, uint32 version);
         ACE_Based::LockedQueue<WorldSession*, ACE_Thread_Mutex> addSessQueue;
 
         //used versions

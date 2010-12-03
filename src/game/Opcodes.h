@@ -741,7 +741,7 @@ enum Opcodes
     CMSG_SHOWING_CLOAK                              = 0x2BA,
     SMSG_LFG_ROLE_CHOSEN                            = 0x2BB,
     SMSG_PLAYER_SKINNED                             = 0x2BC,
-    SMSG_DURABILITY_DAMAGE_DEATH                           = 0xBF0, //4.0.1
+    SMSG_DURABILITY_DAMAGE_DEATH                    = 0xBF0, //4.0.1
     CMSG_SET_EXPLORATION                            = 0x2BE,
     CMSG_SET_ACTIONBAR_TOGGLES                      = 0x2BF,
     UMSG_DELETE_GUILD_CHARTER                       = 0x2C0,
@@ -1028,7 +1028,7 @@ enum Opcodes
     CMSG_CHANNEL_DISPLAY_LIST                       = 0x3D2,
     CMSG_SET_ACTIVE_VOICE_CHANNEL                   = 0x3D3,
     CMSG_GET_CHANNEL_MEMBER_COUNT                   = 0x3D4,
-    SMSG_CHANNEL_MEMBER_COUNT                              = 0xAAB1, //4.0.1
+    SMSG_CHANNEL_MEMBER_COUNT                       = 0xAAB1, //4.0.1
     CMSG_CHANNEL_VOICE_ON                           = 0x3D6,
     CMSG_CHANNEL_VOICE_OFF                          = 0x3D7,
     CMSG_DEBUG_LIST_TARGETS                         = 0x3D8,

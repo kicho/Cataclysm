@@ -254,7 +254,7 @@ World::AddSession_ (WorldSession* s, uint8 code, bool shortForm, uint32 queuePos
     packet << uint32(0);                                   // BillingTimeRemaining
     packet << uint8(0);                                    // BillingPlanFlags
     packet << uint32(0);                                   // BillingTimeRested
-    packet << uint16(Expansion());                          // 0 - normal, 1 - TBC, 2 - WOTLK, 3 - Cataclysm must be set in database manually for each account
+    packet << uint16(s->Expansion());                          // 0 - normal, 1 - TBC, 2 - WOTLK, 3 - Cataclysm must be set in database manually for each account
 
     if (!shortForm)
     {
@@ -262,8 +262,7 @@ World::AddSession_ (WorldSession* s, uint8 code, bool shortForm, uint32 queuePos
         packet << uint8(0);                                     // Unk 3.3.0
     }
 
-    SendPacket(&packet);
-}
+    s->SendPacket(&packet);
 
     s->SendAddonsInfo();
 
@@ -273,7 +272,7 @@ World::AddSession_ (WorldSession* s, uint8 code, bool shortForm, uint32 queuePos
 
 	WorldPacket data(SMSG_CLIENTCACHE_VERSION, 4);
     data << uint32(version);
-    SendPacket(&data);
+    s->SendPacket(&data);
 
     s->SendTutorialsData();
 
@@ -1895,7 +1894,7 @@ void World::UpdateSessions( uint32 diff )
     ///- Add new sessions
     WorldSession* sess;
     while(addSessQueue.next(sess))
-        AddSession_ (sess);
+        AddSession (sess);
 
     ///- Then send an update signal to remaining ones
     for (SessionMap::iterator itr = m_sessions.begin(), next; itr != m_sessions.end(); itr = next)
