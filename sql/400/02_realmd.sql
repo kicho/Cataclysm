@@ -1,1 +1,1 @@
-UPDATE realmlist SET realmbuilds=13131;
+UPDATE realmlist SET realmbuilds=13205;
